@@ -25,7 +25,7 @@ def loop():
         if currentstate == True and previousstate == False:
             print("Motion detected!led turned on >>>")
             # Record previous state
-            picam2.start_and_capture_file('./temp/test{:d}.jpg', initial_delay=0, delay=1, num_files=5)
+            picam2.start_and_capture_files('./temp/test{:d}.jpg', initial_delay=0, delay=1, num_files=5)
             previousstate = True
         # If the sensor has returned to ready state
         elif currentstate == False and previousstate == True:
