@@ -6,11 +6,14 @@
 # modification: 2023/05/11
 ########################################################################
 from gpiozero import MotionSensor
+from picamera2 import Picamera2
 import time
 
 sensorPin = 17    # define sensorPin
 sensor = MotionSensor(sensorPin)
 # sensor.wait_for_no_motion()
+picam2 = Picamera2()
+
 def loop():
     # Variables to hold the current and last states
     currentstate = False
@@ -22,6 +25,7 @@ def loop():
         if currentstate == True and previousstate == False:
             print("Motion detected!led turned on >>>")
             # Record previous state
+            picam2.start_and_capture_file('./temp/test{:d}.jpg', initial_delay=0, delay=1, num_files=5)
             previousstate = True
         # If the sensor has returned to ready state
         elif currentstate == False and previousstate == True:
