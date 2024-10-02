@@ -10,6 +10,7 @@ import datetime
 
 
 class WildlifeCamera:
+
     def __init__(self, eq: EventQueue):
         self.voltage = 0.0
         self.adc = ADCDevice()
@@ -29,6 +30,24 @@ class WildlifeCamera:
                   "Program Exit.\n")
             exit(-1)
 
+    def capture(self, label=None):
+        """Capture images with a specific naming convention."""
+        with self.lock:  
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            voltage = self.voltage  
+            label = label or "motion_detected"  
+
+            for i in range(5):
+                filename = f'./temp/{label}_{i + 1}_{timestamp}_{voltage:.2f}.jpg'
+                
+                # Capture the image
+                self.picam2.start_and_capture_files(filename, initial_delay=0, delay=1, num_files=1)
+                print(f"Captured image: {filename}")
+                sleep(1) 
+
+    def main():
+    eq = EventQueue()  
+    camera = WildlifeCamera(eq)
     
 if __name__ == "__main__":
     main()
