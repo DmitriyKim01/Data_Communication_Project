@@ -32,6 +32,7 @@ class EventQueue:
     def get_event(self):
           self.get_lock.acquire()
           with self.execute_lock:
+            print('Event happened!')
             return self.events.pop()
 
 

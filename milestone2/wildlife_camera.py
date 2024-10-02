@@ -4,6 +4,7 @@ from event_queue import EventQueue
 from time import sleep
 from ADCDevice import *
 from gpiozero import MotionSensor
+from sensor_mock import MockSensor
 from picamera2 import Picamera2
 import time
 import datetime
@@ -30,7 +31,7 @@ class WildlifeCamera:
                   "Program Exit.\n")
             exit(-1)
 
-    def capture(self, label=None):
+    def capture(self, event_label=None):
         """Capture images with a specific naming convention."""
         with self.lock:  
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -44,6 +45,7 @@ class WildlifeCamera:
                 self.picam2.start_and_capture_files(filename, initial_delay=0, delay=1, num_files=1)
                 print(f"Captured image: {filename}")
                 sleep(1) 
+
     def read_led_voltage(self):
             """Continuously read LED voltage."""
             while True:
@@ -66,21 +68,38 @@ class WildlifeCamera:
                         previous_state = False
                     
                     sleep(0.1) 
+
     def read_event_queue(self):
+         while True:
+            last_event = self.event_queue.get_event()
+            self.capture(last_event)
         
 
   
 def main():
     eq = EventQueue()  
     camera = WildlifeCamera(eq)
+    mock = MockSensor()
 
     # Start threads for different functionalities
     voltage_thread = Thread(target=camera.read_led_voltage)
     motion_thread = Thread(target=camera.read_motion_detector)
+    production_event_queue_thread = Thread(target=mock.create_events, args=[eq])
+    consumption_event_queue_thread = Thread(target=eq.read_event_queue)
 
-    voltage_thread.start()
-    motion_thread.start()
+    try:
+        voltage_thread.start()
+        motion_thread.start()
+        production_event_queue_thread.start()
+        consumption_event_queue_thread.start()
+    except KeyboardInterrupt:
+        print(f"Keyboard interruption trapped. Shutting down...")
+    finally:
+        voltage_thread.join()
+        motion_thread.join()
+        production_event_queue_thread.join()
+        consumption_event_queue_thread.join()
+        print(f"Done...")
 
-      
 if __name__ == "__main__":
     main()
