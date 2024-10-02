@@ -11,7 +11,7 @@ import time
 
 sensorPin = 17    # define sensorPin
 sensor = MotionSensor(sensorPin)
-# sensor.wait_for_no_motion()
+sensor.wait_for_no_motion()
 picam2 = Picamera2()
 
 def loop():
@@ -23,13 +23,15 @@ def loop():
         currentstate = sensor.motion_detected
 	# If the sensor is triggered
         if currentstate == True and previousstate == False:
-            print("Motion detected!led turned on >>>")
+            print("Motion detected!>>>")
             # Record previous state
-            picam2.start_and_capture_file('./temp/test{:d}.jpg', initial_delay=0, delay=1, num_files=5)
+            print("Taking pictures")
+            picam2.start_and_capture_files('./temp/test{:d}.jpg', initial_delay=0, delay=1, num_files=5)
+            print("Done taking pictures")
             previousstate = True
         # If the sensor has returned to ready state
         elif currentstate == False and previousstate == True:
-            print("No Motion!led turned off <<")
+            print("No Motion! <<")
             previousstate = False
         # Wait for 10 milliseconds
         time.sleep(0.01)
