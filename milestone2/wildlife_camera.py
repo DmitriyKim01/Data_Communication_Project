@@ -66,7 +66,9 @@ class WildlifeCamera:
                         previous_state = False
                     
                     sleep(0.1) 
-            
+    def read_event_queue(self):
+        
+
   
 def main():
     eq = EventQueue()  
@@ -75,11 +77,9 @@ def main():
     # Start threads for different functionalities
     voltage_thread = Thread(target=camera.read_led_voltage)
     motion_thread = Thread(target=camera.read_motion_detector)
-    # event_queue_thread = Thread(target=camera.read_event_queue)
 
     voltage_thread.start()
     motion_thread.start()
-    # event_queue_thread.start()
 
       
 if __name__ == "__main__":
