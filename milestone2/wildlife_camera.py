@@ -44,7 +44,29 @@ class WildlifeCamera:
                 self.picam2.start_and_capture_files(filename, initial_delay=0, delay=1, num_files=1)
                 print(f"Captured image: {filename}")
                 sleep(1) 
+    def read_led_voltage(self):
+            """Continuously read LED voltage."""
+            while True:
+                value = self.adc.analogRead(0)  
+                self.voltage = value / 255.0 * 3.3 
+                sleep(0.1)  
+    def read_motion_detector(self):
+                """Detect motion and trigger the capture method."""
+                previous_state = False
+                while True:
+                    current_state = self.sensor.motion_detected
 
+                    if current_state and not previous_state:
+                        print("Motion detected! >>>")
+                        self.capture()  
+                        previous_state = True
+
+                    elif not current_state and previous_state:
+                        print("Motion stopped! <<<")
+                        previous_state = False
+                    
+                    sleep(0.1) 
+            
     def main():
     eq = EventQueue()  
     camera = WildlifeCamera(eq)
