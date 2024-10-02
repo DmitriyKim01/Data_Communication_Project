@@ -13,8 +13,7 @@ class EventQueue:
             4: "Bird Gathering"
         }
         self.execute_lock = threading.Lock() 
-        self.get_lock = threading.Lock()
-        self.get_lock.acquire()
+        self.get_lock = threading.Semaphore(len(self.events))
 
     def add_event(self, id):
         if id not in self.event_id_name_map:

@@ -1,5 +1,4 @@
 from threading import Thread, Lock
-# from sensor_mock import MockSensor
 from event_queue import EventQueue
 from time import sleep
 from ADCDevice import *
@@ -21,6 +20,7 @@ class WildlifeCamera:
         self.picam2 = Picamera2()
         self.event_queue = eq  
         self.lock = Lock()
+        self.is_active = True
 
         # Check I2C address
         if self.adc.detectI2C(0x4b): 
@@ -34,11 +34,11 @@ class WildlifeCamera:
     def capture(self, event_label=None):
         """Capture images with a specific naming convention."""
         with self.lock:  
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             voltage = self.voltage  
-            label = label or "motion_detected"  
+            label = event_label or "motion_detected"  
 
-            for i in range(5):
+            for i in range(1):
                 filename = f'./temp/{label}_{i + 1}_{timestamp}_{voltage:.2f}.jpg'
                 
                 # Capture the image
@@ -48,14 +48,14 @@ class WildlifeCamera:
 
     def read_led_voltage(self):
             """Continuously read LED voltage."""
-            while True:
+            while self.is_active:
                 value = self.adc.analogRead(0)  
                 self.voltage = value / 255.0 * 3.3 
                 sleep(0.1)  
     def read_motion_detector(self):
                 """Detect motion and trigger the capture method."""
                 previous_state = False
-                while True:
+                while self.is_active:
                     current_state = self.sensor.motion_detected
 
                     if current_state and not previous_state:
@@ -70,10 +70,12 @@ class WildlifeCamera:
                     sleep(0.1) 
 
     def read_event_queue(self):
-         while True:
+         while self.is_active:
             last_event = self.event_queue.get_event()
             self.capture(last_event)
-        
+    
+    def stop(self):
+        self.is_active = False
 
   
 def main():
@@ -85,7 +87,7 @@ def main():
     voltage_thread = Thread(target=camera.read_led_voltage)
     motion_thread = Thread(target=camera.read_motion_detector)
     production_event_queue_thread = Thread(target=mock.create_events, args=[eq])
-    consumption_event_queue_thread = Thread(target=eq.read_event_queue)
+    consumption_event_queue_thread = Thread(target=camera.read_event_queue)
 
     try:
         voltage_thread.start()
@@ -94,11 +96,14 @@ def main():
         consumption_event_queue_thread.start()
     except KeyboardInterrupt:
         print(f"Keyboard interruption trapped. Shutting down...")
-    finally:
+        mock.stop()
+        camera.stop()
         voltage_thread.join()
         motion_thread.join()
         production_event_queue_thread.join()
         consumption_event_queue_thread.join()
+        print(f"Keyboard interruption trapped. Shutting down...")
+    finally:
         print(f"Done...")
 
 if __name__ == "__main__":
