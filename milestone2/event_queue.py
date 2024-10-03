@@ -1,6 +1,11 @@
-import time
 import threading
+import datetime
 
+class Event:
+    def __init__(self, name, time):
+        self.name = name
+        self.time = time
+         
 class EventQueue:
     def __init__(self):
         self.events = []  
@@ -13,7 +18,7 @@ class EventQueue:
             4: "Bird Gathering"
         }
         self.execute_lock = threading.Lock() 
-        self.get_lock = threading.Semaphore(len(self.events))
+        self.get_lock = threading.Semaphore(0)
 
     def add_event(self, id):
         if id not in self.event_id_name_map:
@@ -21,7 +26,7 @@ class EventQueue:
             raise Exception(f"Invalid event ID: {id}")
 
         with self.execute_lock: 
-            current_time = time.time()
+            current_time = datetime.datetime.now().strftime("%Y-%m-%d_%Hh-%Mm-%Ss")
             self.events.append(self.event_id_name_map[id]) 
             self.timestamps.append(current_time) 
             self.get_lock.release()
@@ -32,6 +37,5 @@ class EventQueue:
           self.get_lock.acquire()
           with self.execute_lock:
             print('Event happened!')
-            return self.events.pop()
-
-
+            event = Event(self.events.pop(), self.timestamps.pop())
+            return event
