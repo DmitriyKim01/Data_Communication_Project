@@ -7,7 +7,7 @@ from sensor_mock import MockSensor
 from picamera2 import Picamera2
 import time
 import datetime
-
+import os
 
 class WildlifeCamera:
 
@@ -31,14 +31,15 @@ class WildlifeCamera:
                   "Program Exit.\n")
             exit(-1)
 
-    def capture(self, event_label=None):
+    def capture(self, event_label=None, timestamp=datetime.datetime.now().strftime("%Y-%m-%d_%Hh-%Mm-%Ss")):
         """Capture images with a specific naming convention."""
         with self.lock:  
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             voltage = self.voltage  
-            label = event_label or "motion_detected"  
-
-            for i in range(1):
+            label = (event_label or "motion_detected").replace(" ", "_")
+            if not os.path.exists('./temp'):
+                 os.makedirs('./temp')
+        
+            for i in range(5):
                 filename = f'./temp/{label}_{i + 1}_{timestamp}_{voltage:.2f}.jpg'
                 
                 # Capture the image
@@ -70,10 +71,10 @@ class WildlifeCamera:
                     sleep(0.1) 
 
     def read_event_queue(self):
-         while self.is_active:
+        while self.is_active:
             last_event = self.event_queue.get_event()
-            self.capture(last_event)
-    
+            self.capture(event_label=last_event.name, timestamp=last_event.time)
+        
     def stop(self):
         self.is_active = False
 
@@ -83,7 +84,6 @@ def main():
     camera = WildlifeCamera(eq)
     mock = MockSensor()
 
-    # Start threads for different functionalities
     voltage_thread = Thread(target=camera.read_led_voltage)
     motion_thread = Thread(target=camera.read_motion_detector)
     production_event_queue_thread = Thread(target=mock.create_events, args=[eq])
@@ -94,17 +94,24 @@ def main():
         motion_thread.start()
         production_event_queue_thread.start()
         consumption_event_queue_thread.start()
+
+        # Keep alive main thread
+        while True:
+            sleep(1)
     except KeyboardInterrupt:
-        print(f"Keyboard interruption trapped. Shutting down...")
         mock.stop()
         camera.stop()
-        voltage_thread.join()
-        motion_thread.join()
-        production_event_queue_thread.join()
-        consumption_event_queue_thread.join()
-        print(f"Keyboard interruption trapped. Shutting down...")
+        print("Keyboard interruption trapped. Shutting down...")
+    except Exception as e:
+        print(e)
+        mock.stop()
+        camera.stop()
     finally:
-        print(f"Done...")
+        voltage_thread.join(timeout=1)
+        motion_thread.join(timeout=1)
+        production_event_queue_thread.join(timeout=1)
+        consumption_event_queue_thread.join(timeout=1)
+        print("Done...")
 
 if __name__ == "__main__":
     main()
