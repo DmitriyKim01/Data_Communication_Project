@@ -5,7 +5,7 @@ class Config:
 
   EVENT_TYPE = 'motion'
   DATE_FORMAT = '%Y-%m-%d_%Hh-%Mm-%Ss'
-  EVENT_MIN_INTERVAL = 3
+  EVENT_MIN_INTERVAL = 5
   EVENT_MAX_INTERVAL = 10
 
   # The humidity value in %

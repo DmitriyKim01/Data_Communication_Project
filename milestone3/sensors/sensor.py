@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from event_queue import Event, EventQueue
 from config import Config
-from threading import Lock
+from threading import Lock, Thread
 import paho.mqtt.client as mqtt
 import time
 import logging
@@ -12,22 +12,26 @@ import json
 # from picamera2 import Picamera2
 
 class Sensor(ABC):
-  def __init__(self, id, type, events_queue):
-    # Params
+  def __init__(self, id, type):
+    # Params validation
     if not isinstance(id, str):
       raise Exception('Invalid sensor id')
     if not isinstance(type, str):
       raise Exception('Invalid sensor type')
-    if not isinstance(events_queue, EventQueue):
-      raise Exception('Invalid event queue')
-    
+    # Params
     self.id = id
     self.type = type
-    self.eventsQueue = events_queue
     
     # Internal
     self.is_active = True
-    self.name = f'{type} Sensor {id}'
+    self.name = f'{type} Sensor {id}' 
+    self.eventsQueue = EventQueue()
+    self.threads = []
+    
+    # Logger
+    self.logger = logging.getLogger(self.name)
+    self.logger = logging.LoggerAdapter(self.logger, {'sensor_name': self.name})
+  
     # TODO: Uncomment when working with the Pi
     # self.picam2 = Picamera2()
     self.lock = Lock()
@@ -36,15 +40,28 @@ class Sensor(ABC):
     self.client = mqtt.Client(client_id=self.name, callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata=None)
     self.topic = f'/sensor/{self.type.lower()}/{self.id}'
     self.client.on_connect = self.on_connect
+  
+  def start(self):
+    # Connect to MQTT broker
     self.client.connect(Config.HOSTNAME, Config.PORT)
     self.client.loop_start()
     
-  def on_connect(self, client, userdata, flags, return_code, properties):
-    logging.info(f'CONNACK received with code %s.' % return_code)
+    # Simulate motion detection
+    motion_simulation_thread = Thread(target=self.simulate_motion)
+    self.threads.append(motion_simulation_thread)
+    motion_simulation_thread.start()
+    
+    # Read event queue
+    read_event_queue_thread = Thread(target=self.read_event_queue)
+    self.threads.append(read_event_queue_thread)
+    read_event_queue_thread.start()
+    
+    
+  def on_connect(self, return_code):
     if return_code == 0:
-        logging.info(f'Connected to MQTT broker')
+        self.logger.info(f'Connected to MQTT broker')
     else:
-        logging.info(f'Failed to connect to MQTT broker', return_code)
+        self.logger.info(f'Failed to connect to MQTT broker', return_code)
         
   def read_event_queue(self):
     while self.is_active:
@@ -52,10 +69,6 @@ class Sensor(ABC):
         self.capture(event)
         self.publish_event(event)
   
-  @abstractmethod
-  def get_sensor_value(self):
-      pass
-    
   def simulate_motion(self):
     while self.is_active:
       # Simulate motion detection
@@ -72,11 +85,16 @@ class Sensor(ABC):
       
       # Add event to queue
       self.eventsQueue.add_event(motion_event)
-      logging.debug(f'EVENT HAPPENED!')
+      self.logger.debug(f'EVENT HAPPENED!')
     
   def stop(self):
     self.is_active = False
     self.client.loop_stop()
+    for thread in self.threads:
+      if not isinstance(thread, Thread):
+        raise Exception('Invalid thread type')
+      thread.join(timeout=1)
+      time.sleep(1)  
     
   def capture(self, event):
     if not isinstance(event, Event):
@@ -84,7 +102,7 @@ class Sensor(ABC):
     with self.lock:
         filename = f'{event.type}_{event.time}.jpg'
         # TODO: Implement the capture method
-        logging.info(f'Capturing image {filename}')
+        self.logger.info(f'Capturing image {filename}')
         time.sleep(1) 
         
   def publish_event(self, event):
@@ -101,7 +119,12 @@ class Sensor(ABC):
     result = self.client.publish(topic = self.topic, payload = data)
     status = result[0]
     if status == 0:
-      logging.info(f'Message sent to topic {self.topic}') 
+      self.logger.info(f'Message sent to topic {self.topic}') 
     else:
-      logging.error(f'Failed to send message to topic {self.topic}')
+      self.logger.error(f'Failed to send message to topic {self.topic}')
+      
+  @abstractmethod
+  def get_sensor_value(self):
+      pass
+    
     

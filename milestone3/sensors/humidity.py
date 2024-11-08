@@ -27,17 +27,11 @@ if __name__ == "__main__":
       format=f'%(levelname)s - ({type} {args.id}) - [{Config.HOSTNAME}:{Config.PORT}] - %(message)s'
   )
   
-  events_queue = EventQueue()
-  humidity_sensor = HumiditySensor(args.id, type, events_queue)
-  
-  # Threads
-  motion_simulation_thread = Thread(target=humidity_sensor.simulate_motion)
-  read_event_queue_thread = Thread(target=humidity_sensor.read_event_queue)
+  humidity_sensor = HumiditySensor(args.id, type)
   
   if args.test:
     try:
-      motion_simulation_thread.start()
-      read_event_queue_thread.start()
+      humidity_sensor.start()
       while True:
         time.sleep(1)
     except KeyboardInterrupt:
@@ -47,9 +41,6 @@ if __name__ == "__main__":
     finally:
       logging.warning("Please wait for the system to shutdown...")
       humidity_sensor.stop()
-      motion_simulation_thread.join(timeout=1)
-      read_event_queue_thread.join(timeout=1)
-      time.sleep(1)
       logging.info("Shutdown complete.")
 
       
