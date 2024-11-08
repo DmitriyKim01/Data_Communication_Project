@@ -57,12 +57,13 @@ class Sensor(ABC):
     read_event_queue_thread.start()
     
     
-  def on_connect(self, return_code):
+  def on_connect(self, client, userdata, flags, return_code, properties):
     if return_code == 0:
         self.logger.info(f'Connected to MQTT broker')
     else:
         self.logger.info(f'Failed to connect to MQTT broker', return_code)
-        
+  
+  # TODO: Implement the read_event_queue method
   def read_event_queue(self):
     while self.is_active:
         event = self.eventsQueue.get_event()
