@@ -11,3 +11,11 @@ class Config:
   # The humidity value in %
   HUMIDITY_MIN_VALUE = 30.0
   HUMIDITY_MAX_VALUE = 90.0
+  
+  # The wind measured in km/h
+  WIND_MIN_VALUE = 0.0
+  WIND_MAX_VALUE = 100.0
+  
+  # The temperature measured in Celsius
+  TEMPERATURE_MIN_VALUE = -50.0
+  TEMPERATURE_MAX_VALUE = 50.0

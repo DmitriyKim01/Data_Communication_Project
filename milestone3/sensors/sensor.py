@@ -14,14 +14,19 @@ import json
 class Sensor(ABC):
   def __init__(self, id, type, events_queue):
     # Params
-    self.id = id
+    if not isinstance(id, str):
+      raise Exception('Invalid sensor id')
+    if not isinstance(type, str):
+      raise Exception('Invalid sensor type')
     if not isinstance(events_queue, EventQueue):
-        raise Exception('Invalid event queue')
+      raise Exception('Invalid event queue')
+    
+    self.id = id
+    self.type = type
     self.eventsQueue = events_queue
     
     # Internal
     self.is_active = True
-    self.type = type
     self.name = f'{type} Sensor {id}'
     # TODO: Uncomment when working with the Pi
     # self.picam2 = Picamera2()
@@ -29,7 +34,7 @@ class Sensor(ABC):
     
     # MQTT
     self.client = mqtt.Client(client_id=self.name, callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata=None)
-    self.topic = f'/sensor/humidity/{self.id}'
+    self.topic = f'/sensor/{self.type.lower()}/{self.id}'
     self.client.on_connect = self.on_connect
     self.client.connect(Config.HOSTNAME, Config.PORT)
     self.client.loop_start()
