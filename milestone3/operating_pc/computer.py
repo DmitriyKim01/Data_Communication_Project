@@ -1,13 +1,16 @@
 import logging
 import paho.mqtt.client as mqtt
+import argparse
 
 class OperatingComputer:
-  def __init__(self, id):
+  def __init__(self, id, trigger,listen):
     # Params
     if not isinstance(id, str):
       raise Exception('Invalid id type')
     self.id = id
     self.name = f'Operating Computer {self.id}' 
+    self.trigger = trigger
+    self.listen = listen
 
     # Logger
     self.logger = logging.getLogger(self.name)
@@ -23,7 +26,31 @@ class OperatingComputer:
         self.logger.info(f'Connected to MQTT broker')
     else:
         self.logger.info(f'Failed to connect to MQTT broker', return_code)
-  
-    
-if __name__ == "__main__":
 
+  def act(self):
+    pass 
+  
+  def disconnect(self):
+      self.client.loop_stop()
+      self.client.disconnect()
+
+    
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    
+    # Use `store_true` to create flags that don't require a value
+    parser.add_argument('-t', '--trigger', action='store_true', help="Allows computer to trigger sensors")
+    parser.add_argument('-l', '--listen', action='store_true', help="Allows computer to listen to sensors")
+    
+    args = parser.parse_args()
+
+
+   
+    computer = OperatingComputer()
+    try:
+        while True:
+          computer.act()
+    except KeyboardInterrupt:
+        computer.disconnect()
