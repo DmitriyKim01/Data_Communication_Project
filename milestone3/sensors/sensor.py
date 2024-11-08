@@ -30,7 +30,7 @@ class Sensor(ABC):
     
     # Logger
     self.logger = logging.getLogger(self.name)
-    self.logger = logging.LoggerAdapter(self.logger, {'sensor_name': self.name})
+    self.logger = logging.LoggerAdapter(self.logger, {'sensor_name': f'{self.type[0:3]}. Sensor {self.id}'})
   
     # TODO: Uncomment when working with the Pi
     # self.picam2 = Picamera2()
