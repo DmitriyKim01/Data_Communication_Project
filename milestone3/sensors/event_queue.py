@@ -28,6 +28,5 @@ class EventQueue:
     def get_event(self):
           self.get_lock.acquire()
           with self.execute_lock:
-            event = Event(self.events.pop())
-            return event
+            return self.events.pop()
 

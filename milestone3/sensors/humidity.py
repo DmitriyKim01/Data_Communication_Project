@@ -18,7 +18,13 @@ class HumiditySensor:
     
     # Internal
     self.is_active = True
-    self.name = f'(Humidity Sensor {self.id})'
+    self.name = f'Humidity Sensor {self.id}'
+    
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format=f'%(levelname)s - ({self.name}) - [{Config.HOSTNAME}:{Config.PORT}] - %(message)s'
+    )
     
     # MQTT
     self.client = mqtt.Client(client_id=self.name, callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata=None)
@@ -27,12 +33,13 @@ class HumiditySensor:
     self.client.connect(Config.HOSTNAME, Config.PORT)
     self.client.loop_start()
   
+  
   def on_connect(self, client, userdata, flags, return_code, properties):
-    print(f'{self.name}[CONNACK] received with code %s.' % return_code)
+    logging.info(f'CONNACK received with code %s.' % return_code)
     if return_code == 0:
-        print(f'{self.name}[CONNECTED] to {Config.HOSTNAME} on port {Config.PORT}')
+        logging.info(f'Connected to MQTT broker')
     else:
-        print(f'{self.name}[CONNECTION ERROR] to {Config.HOSTNAME} on port {Config.PORT}', return_code)
+        logging.info(f'Failed to connect to MQTT broker', return_code)
   
   def simulate_motion_detection(self):
     with self.is_active:
@@ -41,8 +48,7 @@ class HumiditySensor:
   def read_event_queue(self):
     while self.is_active:
         event = self.eventsQueue.get_event()
-        print(f'{self.name}[EVENT] {event}')
-        self.client.publish(self.topic, event)
+        logging.info(f'Reading event {event}')
   
   def simulate_motion(self):
     while self.is_active:
@@ -60,9 +66,11 @@ class HumiditySensor:
       
       # Add event to queue
       self.eventsQueue.add_event(motion_event)
-      print(f'{self.name}[EVENT] {motion_event}')
+      logging.info(f'Creating event {motion_event}')
     
-  # def capture(self):
+  def stop(self):
+    self.is_active = False
+    self.client.loop_stop()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -77,10 +85,13 @@ if __name__ == "__main__":
   
   # Threads
   motion_simulation_thread = Thread(target=sensor.simulate_motion)
+  read_event_queue_thread = Thread(target=sensor.read_event_queue)
   
   if args.test:
+    logging.info("Running in test mode...")
     try:
       motion_simulation_thread.start()
+      read_event_queue_thread.start()
       while True:
         time.sleep(1)
     except KeyboardInterrupt:
@@ -88,11 +99,12 @@ if __name__ == "__main__":
     except Exception as e:
       logging.error(e)
     finally:
-      sensor.is_active = False
-      sensor.client.loop_stop()
+      logging.warning("Please wait for the system to shutdown...")
+      sensor.stop()
       motion_simulation_thread.join(timeout=1)
+      read_event_queue_thread.join(timeout=1)
       time.sleep(1)
-      print("Done...")
+      logging.info("Shutdown complete.")
 
       
     
