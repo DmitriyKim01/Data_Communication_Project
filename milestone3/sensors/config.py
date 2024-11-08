@@ -1,6 +1,6 @@
 
 class Config:
-  HOSTNAME = "localhost"
+  HOSTNAME = "35.183.124.89"
   PORT = 1883
 
   EVENT_TYPE = 'motion'

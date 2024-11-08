@@ -14,7 +14,7 @@ class SensorNameFilter(logging.Filter):
 if __name__ == "__main__":
   logging.basicConfig(
       level=logging.INFO,
-      format=f'%(levelname)s - (%(sensor_name)s) - [{Config.HOSTNAME}:{Config.PORT}] - %(message)s'
+      format=f'%(levelname)s - [{Config.HOSTNAME}:{Config.PORT}] - (%(sensor_name)s) - %(message)s'
   )
   
   logger = logging.getLogger()
