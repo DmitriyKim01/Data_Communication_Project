@@ -1,94 +1,40 @@
 from config import Config
-import paho.mqtt.client as mqtt
-from threading import Thread, Lock
-from event_queue import Event, EventQueue
+from threading import Thread
+from event_queue import EventQueue
 import argparse
 import random
-import datetime
 import time
 import logging
+from sensor import Sensor
 
-class HumiditySensor:
-  def __init__(self, id, eventsQueue):
-    # Params
-    self.id = id
-    if not isinstance(eventsQueue, EventQueue):
-        raise Exception('Invalid event queue')
-    self.eventsQueue = eventsQueue
-    
-    # Internal
-    self.is_active = True
-    self.name = f'Humidity Sensor {self.id}'
-    
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format=f'%(levelname)s - ({self.name}) - [{Config.HOSTNAME}:{Config.PORT}] - %(message)s'
-    )
-    
-    # MQTT
-    self.client = mqtt.Client(client_id=self.name, callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata=None)
-    self.topic = f'/sensor/humidity/{self.id}'
-    self.client.on_connect = self.on_connect
-    self.client.connect(Config.HOSTNAME, Config.PORT)
-    self.client.loop_start()
-  
-  
-  def on_connect(self, client, userdata, flags, return_code, properties):
-    logging.info(f'CONNACK received with code %s.' % return_code)
-    if return_code == 0:
-        logging.info(f'Connected to MQTT broker')
-    else:
-        logging.info(f'Failed to connect to MQTT broker', return_code)
-  
-  def simulate_motion_detection(self):
-    with self.is_active:
-        time.sleep(random)
-        
-  def read_event_queue(self):
-    while self.is_active:
-        event = self.eventsQueue.get_event()
-        logging.info(f'Reading event {event}')
-  
-  def simulate_motion(self):
-    while self.is_active:
-      # Simulate motion detection
-      min_interval = Config.EVENT_MIN_INTERVAL
-      max_interval = Config.EVENT_MAX_INTERVAL
-      random_inteval = random.uniform(min_interval, max_interval)
-      time.sleep(random_inteval)
-      
-      # Create new event
-      event_type = Config.EVENT_TYPE
-      event_time = datetime.datetime.now().strftime(Config.DATE_FORMAT)
-      humidity_value = random.uniform(Config.HUMIDITY_MIN_VALUE, Config.HUMIDITY_MAX_VALUE)
-      motion_event = Event(event_type, event_time, humidity_value)
-      
-      # Add event to queue
-      self.eventsQueue.add_event(motion_event)
-      logging.info(f'Creating event {motion_event}')
-    
-  def stop(self):
-    self.is_active = False
-    self.client.loop_stop()
+class HumiditySensor(Sensor):
+  def get_sensor_value(self):
+    return random.uniform(Config.HUMIDITY_MIN_VALUE, Config.HUMIDITY_MAX_VALUE)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-l', '--lat_long',nargs=2, default=[45.5,73.5])
-  parser.add_argument('-c', '--city', default="Montreal")
   parser.add_argument('-i', '--id', default="0001")
   parser.add_argument('-t', '--test', action='store_true')
   args = parser.parse_args()
   
-  eventsQueue = EventQueue()
-  sensor = HumiditySensor(args.id, eventsQueue)
+  if not args.id:
+    raise Exception('Missing sensor id')
+  
+  type = 'Humidity'
+  # Configure logging
+  logging.basicConfig(
+      level=logging.DEBUG,
+      format=f'%(levelname)s - ({type} {args.id}) - [{Config.HOSTNAME}:{Config.PORT}] - %(message)s'
+  )
+  
+  events_queue = EventQueue()
+  humidity_sensor = HumiditySensor(args.id, type, events_queue)
   
   # Threads
-  motion_simulation_thread = Thread(target=sensor.simulate_motion)
-  read_event_queue_thread = Thread(target=sensor.read_event_queue)
+  motion_simulation_thread = Thread(target=humidity_sensor.simulate_motion)
+  read_event_queue_thread = Thread(target=humidity_sensor.read_event_queue)
   
   if args.test:
-    logging.info("Running in test mode...")
     try:
       motion_simulation_thread.start()
       read_event_queue_thread.start()
@@ -97,10 +43,10 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
       logging.warning("Keyboard interruption trapped. Shutting down...")
     except Exception as e:
-      logging.error(e)
+      logging.critical(e)
     finally:
       logging.warning("Please wait for the system to shutdown...")
-      sensor.stop()
+      humidity_sensor.stop()
       motion_simulation_thread.join(timeout=1)
       read_event_queue_thread.join(timeout=1)
       time.sleep(1)

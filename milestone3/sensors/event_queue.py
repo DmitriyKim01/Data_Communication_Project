@@ -28,5 +28,8 @@ class EventQueue:
     def get_event(self):
           self.get_lock.acquire()
           with self.execute_lock:
-            return self.events.pop()
+            event = self.events.pop()
+            if not isinstance(event, Event):
+                raise Exception('Invalid event type')
+            return event
 
