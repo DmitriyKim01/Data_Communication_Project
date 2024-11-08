@@ -2,12 +2,13 @@ import threading
 import datetime
 
 class Event:
-    def __init__(self, type, time):
+    def __init__(self, type, time, value):
         self.type = type
         self.time = time
+        self.value = value
 
     def __str__(self):
-        return f"{self.event_type} at {self.event_time}"
+        return f'{self.type} at {self.time}'
     
 class EventQueue:
     def __init__(self):
@@ -17,10 +18,10 @@ class EventQueue:
         
     def add_event(self, event):
         if not isinstance(event, Event):
-            raise Exception("Invalid event type")
+            raise Exception('Invalid event type')
 
         with self.execute_lock: 
-            current_time = datetime.datetime.now().strftime("%Y-%m-%d_%Hh-%Mm-%Ss")
+            current_time = datetime.datetime.now().strftime('%Y-%m-%d_%Hh-%Mm-%Ss')
             self.events.append(event)
             self.get_lock.release()
 
