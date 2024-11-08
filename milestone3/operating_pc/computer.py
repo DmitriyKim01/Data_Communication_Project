@@ -27,8 +27,48 @@ class OperatingComputer:
     else:
         self.logger.info(f'Failed to connect to MQTT broker', return_code)
 
+  def handle_actions(self):
+
+        self.logger.info('Handling both triggering and listening to sensors...')
+        self.trigger_sensor()
+        self.listen_to_sensor()
+
+  def listen_to_sensors(self):
+      # TODO: MAKE THIS AUTOMATIC SOMEHOW
+      # Collect multiple IP addresses from the user
+      ids = []
+      while True:
+          id = input("Enter an IP address (or type 'done' to finish): ")
+          if id.lower() == 'done':
+              break
+          ids.append(id)
+
+      sensor_type = input("Enter sensor type: ")
+
+      self.client.loop_start()
+
+      # Subscribe to each topic for the given IPs
+      for id in ids:
+          topic = f'/sensor/{sensor_type}/{id}'
+          self.client.subscribe(topic)
+          self.logger.info(f"Subscribed to topic: {topic}")
+
+
+  def trigger_sensor(self):
+        # Handle triggering a sensor (simulating sending an event or command to a sensor)
+        self.logger.info('Triggering sensor...')
+        # Simulate sending a command to the sensor via MQTT (or any other mechanism)
+        self.client.publish(self.topic, "Trigger command to sensor")
+
   def act(self):
-    pass 
+      if(self.trigger and self.listen):
+        self.handle_actions()
+      elif(self.trigger and not self.listen):
+        self.trigger_sensor()
+      else:
+        self.listen_to_sensors()
+    
+
   
   def disconnect(self):
       self.client.loop_stop()
