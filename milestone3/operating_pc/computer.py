@@ -29,9 +29,7 @@ class OperatingComputer:
         self.logger.info(f'Failed to connect to MQTT broker', return_code)
 
   def handle_actions(self):
-
         self.logger.info('Handling both triggering and listening to sensors...')
-        # self.trigger_sensor()
         self.listen_to_sensor()
 
   def listen_to_sensors(self):
@@ -92,7 +90,6 @@ if __name__ == "__main__":
    
     computer = OperatingComputer(args.id,args.trigger,args.listen)
     try:
-        while True:
-          computer.act()
+        computer.act()
     except KeyboardInterrupt:
         computer.disconnect()
