@@ -1,6 +1,7 @@
 import logging
 import paho.mqtt.client as mqtt
 import argparse
+from config import Config
 
 class OperatingComputer:
   def __init__(self, id, trigger,listen):
@@ -30,7 +31,7 @@ class OperatingComputer:
   def handle_actions(self):
 
         self.logger.info('Handling both triggering and listening to sensors...')
-        self.trigger_sensor()
+        # self.trigger_sensor()
         self.listen_to_sensor()
 
   def listen_to_sensors(self):
@@ -44,14 +45,14 @@ class OperatingComputer:
           ids.append(id)
 
       sensor_type = input("Enter sensor type: ")
-
+      self.client.connect(Config.HOSTNAME, Config.PORT)
       self.client.loop_start()
-
       # Subscribe to each topic for the given IPs
       for id in ids:
           topic = f'/sensor/{sensor_type}/{id}'
           self.client.subscribe(topic)
-          self.logger.info(f"Subscribed to topic: {topic}")
+          print(f"Subscribed to topic: {topic}")
+
 
 
   def trigger_sensor(self):
@@ -81,6 +82,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
     # Use `store_true` to create flags that don't require a value
+    parser.add_argument('-i', '--id', default="0001", help="Identifies computer")
     parser.add_argument('-t', '--trigger', action='store_true', help="Allows computer to trigger sensors")
     parser.add_argument('-l', '--listen', action='store_true', help="Allows computer to listen to sensors")
     
@@ -88,7 +90,7 @@ if __name__ == "__main__":
 
 
    
-    computer = OperatingComputer()
+    computer = OperatingComputer(args.id,args.trigger,args.listen)
     try:
         while True:
           computer.act()
