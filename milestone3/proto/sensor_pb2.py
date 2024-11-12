@@ -24,17 +24,21 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csensor.proto\x12\x06sensor\"#\n\x0eTriggerRequest\x12\x11\n\tsensor_id\x18\x01 \x01(\t\"%\n\x0f\x43\x61ptureResponse\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\x32R\n\rSensorService\x12\x41\n\x0eTriggerCapture\x12\x16.sensor.TriggerRequest\x1a\x17.sensor.CaptureResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csensor.proto\"#\n\x0eTriggerRequest\x12\x11\n\tsensor_id\x18\x01 \x01(\t\"%\n\x0f\x43\x61ptureResponse\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\"\x0e\n\x0c\x45mptyRequest\" \n\x11SensorIdsResponse\x12\x0b\n\x03ids\x18\x01 \x03(\t2w\n\rSensorService\x12\x33\n\x0eTriggerCapture\x12\x0f.TriggerRequest\x1a\x10.CaptureResponse\x12\x31\n\x0cGetSensorIds\x12\r.EmptyRequest\x1a\x12.SensorIdsResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'sensor_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_TRIGGERREQUEST']._serialized_start=24
-  _globals['_TRIGGERREQUEST']._serialized_end=59
-  _globals['_CAPTURERESPONSE']._serialized_start=61
-  _globals['_CAPTURERESPONSE']._serialized_end=98
-  _globals['_SENSORSERVICE']._serialized_start=100
-  _globals['_SENSORSERVICE']._serialized_end=182
+  _globals['_TRIGGERREQUEST']._serialized_start=16
+  _globals['_TRIGGERREQUEST']._serialized_end=51
+  _globals['_CAPTURERESPONSE']._serialized_start=53
+  _globals['_CAPTURERESPONSE']._serialized_end=90
+  _globals['_EMPTYREQUEST']._serialized_start=92
+  _globals['_EMPTYREQUEST']._serialized_end=106
+  _globals['_SENSORIDSRESPONSE']._serialized_start=108
+  _globals['_SENSORIDSRESPONSE']._serialized_end=140
+  _globals['_SENSORSERVICE']._serialized_start=142
+  _globals['_SENSORSERVICE']._serialized_end=261
 # @@protoc_insertion_point(module_scope)

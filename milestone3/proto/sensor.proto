@@ -1,16 +1,20 @@
 syntax = "proto3";
 
-package sensor;
-
 service SensorService {
-  // Trigger the sensor to capture an image
   rpc TriggerCapture (TriggerRequest) returns (CaptureResponse);
+  rpc GetSensorIds (EmptyRequest) returns (SensorIdsResponse);
 }
-//Trigger sensor
+
 message TriggerRequest {
-  string sensor_id = 1;  
+  string sensor_id = 1;
 }
-//Image data
+
 message CaptureResponse {
-  bytes image_data = 1;  
+  bytes image_data = 1;
+}
+
+message EmptyRequest {}
+
+message SensorIdsResponse {
+  repeated string ids = 1;
 }

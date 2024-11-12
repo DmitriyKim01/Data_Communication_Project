@@ -4,6 +4,7 @@ import grpc
 import warnings
 import sys
 import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import proto.sensor_pb2 as sensor__pb2
 
 GRPC_GENERATED_VERSION = '1.67.1'
@@ -36,9 +37,14 @@ class SensorServiceStub(object):
             channel: A grpc.Channel.
         """
         self.TriggerCapture = channel.unary_unary(
-                '/sensor.SensorService/TriggerCapture',
+                '/SensorService/TriggerCapture',
                 request_serializer=sensor__pb2.TriggerRequest.SerializeToString,
                 response_deserializer=sensor__pb2.CaptureResponse.FromString,
+                _registered_method=True)
+        self.GetSensorIds = channel.unary_unary(
+                '/SensorService/GetSensorIds',
+                request_serializer=sensor__pb2.EmptyRequest.SerializeToString,
+                response_deserializer=sensor__pb2.SensorIdsResponse.FromString,
                 _registered_method=True)
 
 
@@ -46,8 +52,13 @@ class SensorServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def TriggerCapture(self, request, context):
-        """Trigger the sensor to capture an image
-        """
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetSensorIds(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -60,11 +71,16 @@ def add_SensorServiceServicer_to_server(servicer, server):
                     request_deserializer=sensor__pb2.TriggerRequest.FromString,
                     response_serializer=sensor__pb2.CaptureResponse.SerializeToString,
             ),
+            'GetSensorIds': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetSensorIds,
+                    request_deserializer=sensor__pb2.EmptyRequest.FromString,
+                    response_serializer=sensor__pb2.SensorIdsResponse.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'sensor.SensorService', rpc_method_handlers)
+            'SensorService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('sensor.SensorService', rpc_method_handlers)
+    server.add_registered_method_handlers('SensorService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
@@ -85,9 +101,36 @@ class SensorService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/sensor.SensorService/TriggerCapture',
+            '/SensorService/TriggerCapture',
             sensor__pb2.TriggerRequest.SerializeToString,
             sensor__pb2.CaptureResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetSensorIds(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/SensorService/GetSensorIds',
+            sensor__pb2.EmptyRequest.SerializeToString,
+            sensor__pb2.SensorIdsResponse.FromString,
             options,
             channel_credentials,
             insecure,
