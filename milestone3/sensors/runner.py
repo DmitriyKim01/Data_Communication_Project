@@ -1,6 +1,6 @@
-from humidity import HumiditySensor
-from temperature import TemperatureSensor
-from wind import WindSensor
+from sensors.humidity import HumiditySensor
+from sensors.temperature import TemperatureSensor
+from sensors.wind import WindSensor
 import time
 import logging
 from config import Config

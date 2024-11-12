@@ -107,6 +107,7 @@ class Sensor(ABC):
         time.sleep(1) 
   def capture(self):
      return b"bite data for img"
+  
   def publish_event(self, event):
     if not isinstance(event, Event):
       raise Exception('Invalid event type')

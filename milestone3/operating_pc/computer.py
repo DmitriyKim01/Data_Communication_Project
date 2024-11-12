@@ -135,6 +135,7 @@ class OperatingComputer:
           self.logger.error(f"Error triggering sensor {sensor_id}: {e.details()}")
 
 
+
     def act(self):
         if self.trigger and self.listen:
             self.handle_actions()
@@ -156,6 +157,7 @@ class OperatingComputer:
       except grpc.RpcError as e:
           self.logger.error(f"Error retrieving sensor IDs: {e.details()}")
           return []
+
       
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

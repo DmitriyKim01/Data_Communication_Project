@@ -17,7 +17,7 @@ class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
             '0002': TemperatureSensor('0002', 'Temperature'),
             '0003': WindSensor('0003', 'Wind')
         }
-
+        self.EventCaptures()
     def TriggerCapture(self, request, context):
         """Triggered when the client sends a request to capture an image."""
         sensor_id = request.sensor_id
@@ -41,6 +41,13 @@ class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
         """Returns a list of all sensor IDs."""
         sensor_ids = list(self.sensors.keys())
         return sensor_pb2.SensorIdsResponse(ids=sensor_ids)
+    def EventCaptures(self):
+        for sensor in self.sensors.values(): 
+            try:
+                sensor.start() 
+            except Exception as e:
+                print(f"Error starting senso")
+
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     grpc_sensor.add_SensorServiceServicer_to_server(SensorServiceServicer(), server)
