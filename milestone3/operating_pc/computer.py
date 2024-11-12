@@ -31,7 +31,7 @@ class OperatingComputer:
     # gRPC
     self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
     self.stub = sensor_pb2_grpc.SensorServiceStub(self.channel)
-    
+
   def on_connect(self, client, userdata, flags, return_code, properties):
     if return_code == 0:
         self.logger.info(f'Connected to MQTT broker')
@@ -43,7 +43,6 @@ class OperatingComputer:
         self.listen_to_sensor()
 
   def listen_to_sensors(self):
-      # TODO: MAKE THIS AUTOMATIC SOMEHOW
       # Collect multiple IP addresses from the user
       ids = []
       while True:
@@ -55,11 +54,22 @@ class OperatingComputer:
       sensor_type = input("Enter sensor type: ")
       self.client.connect(Config.HOSTNAME, Config.PORT)
       self.client.loop_start()
+
       # Subscribe to each topic for the given IPs
       for id in ids:
           topic = f'/sensor/{sensor_type}/{id}'
           self.client.subscribe(topic)
           print(f"Subscribed to topic: {topic}")
+
+      # Keep the program running to listen for incoming messages
+      try:
+          while True:
+              pass  # You can add any other logic you want here, or keep it as an infinite loop
+      except KeyboardInterrupt:
+          self.client.loop_stop()
+          self.client.disconnect()
+          print("Disconnected from MQTT broker.")
+
 
 
 
