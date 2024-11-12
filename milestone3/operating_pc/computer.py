@@ -1,6 +1,12 @@
 import logging
 import paho.mqtt.client as mqtt
 import argparse
+import grpc
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import proto.sensor_pb2 as sensor_pb2 
+import proto.sensor_pb2_grpc as sensor_pb2_grpc
 from config import Config
 
 class OperatingComputer:
@@ -22,6 +28,10 @@ class OperatingComputer:
     self.topic = f'/operating/computer/{self.id}'
     self.client.on_connect = self.on_connect
 
+    # gRPC
+    self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
+    self.stub = sensor_pb2_grpc.SensorServiceStub(self.channel)
+    
   def on_connect(self, client, userdata, flags, return_code, properties):
     if return_code == 0:
         self.logger.info(f'Connected to MQTT broker')
@@ -53,17 +63,34 @@ class OperatingComputer:
 
 
 
-  def trigger_sensor(self):
-        # Handle triggering a sensor (simulating sending an event or command to a sensor)
-        self.logger.info('Triggering sensor...')
-        # Simulate sending a command to the sensor via MQTT (or any other mechanism)
-        self.client.publish(self.topic, "Trigger command to sensor")
+  def trigger_sensor(self, sensor_id):
+    """Trigger the sensor to capture an image using gRPC."""
+    self.logger.info(f'Triggering capture for sensor {sensor_id}...')
+    
+    # Create a TriggerRequest object to send to the sensor
+    request = sensor_pb2.TriggerRequest(sensor_id=sensor_id)
+
+    # Call the TriggerCapture method on the gRPC service
+    try:
+        response = self.stub.TriggerCapture(request)
+        
+        # Handle the image data response
+        self.logger.info(f"Capture response received from sensor {sensor_id}")
+        
+        print(response.image_data)
+   
+        self.logger.info(f"Image for sensor {sensor_id} saved successfully.")
+    
+    except grpc.RpcError as e:
+        self.logger.error(f"Error triggering sensor {sensor_id}: {e.details()}")
+
 
   def act(self):
       if(self.trigger and self.listen):
         self.handle_actions()
       elif(self.trigger and not self.listen):
-        self.trigger_sensor()
+        sensor_id = input("Enter a sensor id to trigger")
+        self.trigger_sensor(sensor_id)
       else:
         self.listen_to_sensors()
     
