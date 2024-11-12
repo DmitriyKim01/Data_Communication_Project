@@ -24,9 +24,11 @@ class OperatingComputer:
         self.logger = logging.LoggerAdapter(self.logger, {'sensor_name': f'OC {self.id}'})
 
         # MQTT
+
         self.client = mqtt.Client(client_id=self.name, callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata=None)
-        self.topic = f'/operating/computer/{self.id}'
-        self.client.on_connect = self.on_connect
+        self.client.connect(Config.HOSTNAME, Config.PORT)
+        self.client.on_message = self.on_message
+        
 
         # gRPC
         self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
@@ -53,7 +55,8 @@ class OperatingComputer:
     def listen_to_sensors(self):
       # Collect multiple IP addresses and their sensor types from the user
       print("Currently selecting which sensors to listen to...")
-      sensor_details = []  
+      sensor_details = [] 
+   
       while True:
           id = input("Enter an IP address (or type 'done' to finish): ")
           
@@ -67,26 +70,21 @@ class OperatingComputer:
               else:
                   print("Invalid sensor type. Please enter (H), (T), (W), or (A).")
           sensor_details.append((id, sensor_type))  
-
+        # Subscribe to each topic based on the given IPs and their sensor types
+          for id, sensor_type in sensor_details:
+              # Map user input to actual sensor type strings
+              if sensor_type == "h":
+                  sensor_type = "humidity"
+              elif sensor_type == "t":
+                  sensor_type = "temperature"
+              elif sensor_type == "w":
+                  sensor_type = "wind"
+              else:
+                  sensor_type = "+" 
+              self.client.subscribe(f'/sensor/{sensor_type}/{id}')
+              
       # Connect to the MQTT broker and start listening
-      self.client.connect(Config.HOSTNAME, Config.PORT)
       self.client.loop_start()
-
-      # Subscribe to each topic based on the given IPs and their sensor types
-      for id, sensor_type in sensor_details:
-          # Map user input to actual sensor type strings
-          if sensor_type == "h":
-              sensor_type = "humidity"
-          elif sensor_type == "t":
-              sensor_type = "temperature"
-          elif sensor_type == "w":
-              sensor_type = "wind"
-          else:
-              sensor_type = "+" 
-
-          topic = f'/sensor/{sensor_type}/{id}'
-          self.client.subscribe(topic)
-          print(f"Subscribed to topic: {topic}")
 
     # Keep the program running to listen for incoming messages
       try:
@@ -99,6 +97,9 @@ class OperatingComputer:
           self.disconnect()
           print("Disconnected from MQTT broker.")
 
+    def on_message(self, client, userdata, message):
+      """Callback function to handle incoming MQTT messages."""
+      print(f"Received message on topic {message.topic}: {message.payload.decode()}")
 
     def trigger_sensor(self):
       # Retrieve valid sensor IDs from the gRPC server
