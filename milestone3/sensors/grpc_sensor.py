@@ -25,7 +25,7 @@ class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
         if sensor_id not in self.sensors:
             context.set_details(f"Sensor with ID {sensor_id} not found.")
             context.set_code(grpc.StatusCode.NOT_FOUND)
-            return sensor_pb2.CaptureResponse()  # Return empty response in case of error
+            return sensor_pb2.CaptureResponse()  
 
         # Get the correct sensor and trigger the image capture
         sensor = self.sensors[sensor_id]

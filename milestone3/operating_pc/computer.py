@@ -39,11 +39,20 @@ class OperatingComputer:
         self.logger.info(f'Failed to connect to MQTT broker', return_code)
 
   def handle_actions(self):
-        self.logger.info('Handling both triggering and listening to sensors...')
-        self.listen_to_sensor()
+    while True:
+        option = input("What do you want to do? Enter (T) for trigger or (L) to listen: ")
+        if str.lower(option) == 't':
+            self.trigger_sensor()
+            break  
+        elif str.lower(option) == 'l':
+            self.listen_to_sensors()
+            break  
+        else:
+            print("Invalid option. Please enter (T) or (L).")
 
   def listen_to_sensors(self):
       # Collect multiple IP addresses from the user
+      print("Currently selecting which sensors to listen to...")
       ids = []
       while True:
           id = input("Enter an IP address (or type 'done' to finish): ")
@@ -51,7 +60,7 @@ class OperatingComputer:
               break
           ids.append(id)
 
-      sensor_type = input("Enter sensor type: ")
+      sensor_type = input("Enter sensor type:")
       self.client.connect(Config.HOSTNAME, Config.PORT)
       self.client.loop_start()
 
@@ -73,7 +82,9 @@ class OperatingComputer:
 
 
 
-  def trigger_sensor(self, sensor_id):
+  def trigger_sensor(self):
+
+    sensor_id = input("Enter a sensor id to trigger.")
     """Trigger the sensor to capture an image using gRPC."""
     self.logger.info(f'Triggering capture for sensor {sensor_id}...')
     
@@ -99,8 +110,7 @@ class OperatingComputer:
       if(self.trigger and self.listen):
         self.handle_actions()
       elif(self.trigger and not self.listen):
-        sensor_id = input("Enter a sensor id to trigger")
-        self.trigger_sensor(sensor_id)
+        self.trigger_sensor()
       else:
         self.listen_to_sensors()
     
