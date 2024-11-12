@@ -54,12 +54,11 @@ class OperatingComputer:
       # Collect multiple IP addresses and their sensor types from the user
       print("Currently selecting which sensors to listen to...")
       sensor_details = []  
-
       while True:
           id = input("Enter an IP address (or type 'done' to finish): ")
+          
           if id.lower() == 'done':
               break
-          
           # Ensure the user provides a valid sensor type for each IP
           while True:
               sensor_type = input("Enter sensor type for this IP: (H) for Humidity, (T) for Temperature, (W) for Wind, or (A) for any: ").lower()
@@ -67,7 +66,6 @@ class OperatingComputer:
                   break
               else:
                   print("Invalid sensor type. Please enter (H), (T), (W), or (A).")
-          
           sensor_details.append((id, sensor_type))  
 
       # Connect to the MQTT broker and start listening
@@ -103,22 +101,38 @@ class OperatingComputer:
 
 
     def trigger_sensor(self):
-        sensor_id = input("Enter a sensor id to trigger: ")
-        """Trigger the sensor to capture an image using gRPC."""
-        self.logger.info(f'Triggering capture for sensor {sensor_id}...')
-        
-        # Create a TriggerRequest object to send to the sensor
-        request = sensor_pb2.TriggerRequest(sensor_id=sensor_id)
+      # Retrieve valid sensor IDs from the gRPC server
+      valid_sensor_ids = self.get_sensor_ids()
 
-        # Call the TriggerCapture method on the gRPC service
-        try:
-            response = self.stub.TriggerCapture(request)
-            # Handle the image data response
-            self.logger.info(f"Capture response received from sensor {sensor_id}")
-            print(response.image_data)
-            self.logger.info(f"Image for sensor {sensor_id} saved successfully.")
-        except grpc.RpcError as e:
-            self.logger.error(f"Error triggering sensor {sensor_id}: {e.details()}")
+      if not valid_sensor_ids:
+          self.logger.error("No valid sensor IDs found.")
+          return
+      sensor_id = ""
+
+      # Keep asking for a sensor ID until the user provides a valid one
+      while True:
+          sensor_id = input("Enter a sensor ID to trigger: ")
+          if sensor_id in valid_sensor_ids:
+              break
+          else:
+              print(f"Invalid sensor ID. Valid IDs are: {', '.join(valid_sensor_ids)}")
+
+      """Trigger the sensor to capture an image using gRPC."""
+      self.logger.info(f'Triggering capture for sensor {sensor_id}...')
+      
+      # Create a TriggerRequest object to send to the sensor
+      request = sensor_pb2.TriggerRequest(sensor_id=sensor_id)
+
+      # Call the TriggerCapture method on the gRPC service
+      try:
+          response = self.stub.TriggerCapture(request)
+          # Handle the image data response
+          self.logger.info(f"Capture response received from sensor {sensor_id}")
+          print(response.image_data)
+          self.logger.info(f"Image for sensor {sensor_id} saved successfully.")
+      except grpc.RpcError as e:
+          self.logger.error(f"Error triggering sensor {sensor_id}: {e.details()}")
+
 
     def act(self):
         if self.trigger and self.listen:
@@ -132,6 +146,16 @@ class OperatingComputer:
         self.client.loop_stop()
         self.client.disconnect()
 
+    def get_sensor_ids(self):
+      """Retrieve all sensor IDs from the gRPC server."""
+      try:
+          response = self.stub.GetSensorIds(sensor_pb2.EmptyRequest())
+          self.logger.info(f"Retrieved sensor IDs: {response.ids}")
+          return response.ids
+      except grpc.RpcError as e:
+          self.logger.error(f"Error retrieving sensor IDs: {e.details()}")
+          return []
+      
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Use `store_true` to create flags that don't require a value
