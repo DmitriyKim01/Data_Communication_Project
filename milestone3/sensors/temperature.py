@@ -1,11 +1,11 @@
-from config import Config
+from sensors.config import Config
 from threading import Thread
-from event_queue import EventQueue
+from sensors.event_queue import EventQueue
 import argparse
 import random
 import time
 import logging
-from sensor import Sensor
+from sensors.sensor import Sensor
 
 class TemperatureSensor(Sensor):
   def get_sensor_value(self):
