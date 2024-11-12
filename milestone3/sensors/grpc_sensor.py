@@ -37,7 +37,10 @@ class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
             context.set_details(f"Error capturing image: {e}")
             context.set_code(grpc.StatusCode.INTERNAL)
             return sensor_pb2.CaptureResponse()
-
+    def GetSensorIds(self, request, context):
+        """Returns a list of all sensor IDs."""
+        sensor_ids = list(self.sensors.keys())
+        return sensor_pb2.SensorIdsResponse(ids=sensor_ids)
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     grpc_sensor.add_SensorServiceServicer_to_server(SensorServiceServicer(), server)
