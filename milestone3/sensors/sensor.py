@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from event_queue import Event, EventQueue
-from config import Config
+from sensors.event_queue import Event, EventQueue
+from sensors.config import Config
 from threading import Lock, Thread
 import paho.mqtt.client as mqtt
 import time
@@ -67,7 +67,7 @@ class Sensor(ABC):
   def read_event_queue(self):
     while self.is_active:
         event = self.eventsQueue.get_event()
-        self.capture(event)
+        self.capture_event(event)
         self.publish_event(event)
   
   def simulate_motion(self):
@@ -96,8 +96,8 @@ class Sensor(ABC):
         raise Exception('Invalid thread type')
       thread.join(timeout=1)
       time.sleep(1)  
-    
-  def capture(self, event):
+  
+  def capture_event(self, event):
     if not isinstance(event, Event):
         raise Exception('Invalid event type')
     with self.lock:
@@ -105,7 +105,8 @@ class Sensor(ABC):
         # TODO: Implement the capture method
         self.logger.info(f'Capturing image {filename}')
         time.sleep(1) 
-        
+  def capture(self):
+     return b"bite data for img"
   def publish_event(self, event):
     if not isinstance(event, Event):
       raise Exception('Invalid event type')
