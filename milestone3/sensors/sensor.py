@@ -8,6 +8,9 @@ import logging
 import random
 import datetime
 import json
+import grpc
+import proto.sensor_pb2 as sensor_pb2
+import proto.sensor_pb2_grpc as grpc_sensor
 # TODO: Uncomment when working with the Pi
 # from picamera2 import Picamera2
 
@@ -40,7 +43,11 @@ class Sensor(ABC):
     self.client = mqtt.Client(client_id=self.name, callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata=None)
     self.topic = f'/sensor/{self.type.lower()}/{self.id}'
     self.client.on_connect = self.on_connect
-  
+
+    # GRPC
+    self.channel = grpc.insecure_channel()
+    self.stub = grpc_sensor.SensorServiceStub(self.channel)
+
   def start(self):
     # Connect to MQTT broker
     self.client.connect(Config.HOSTNAME, Config.PORT)

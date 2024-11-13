@@ -24,21 +24,21 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csensor.proto\"#\n\x0eTriggerRequest\x12\x11\n\tsensor_id\x18\x01 \x01(\t\"%\n\x0f\x43\x61ptureResponse\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\"\x0e\n\x0c\x45mptyRequest\" \n\x11SensorIdsResponse\x12\x0b\n\x03ids\x18\x01 \x03(\t2w\n\rSensorService\x12\x33\n\x0eTriggerCapture\x12\x0f.TriggerRequest\x1a\x10.CaptureResponse\x12\x31\n\x0cGetSensorIds\x12\r.EmptyRequest\x1a\x12.SensorIdsResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csensor.proto\"9\n\x0fRegisterRequest\x12\x11\n\tsensor_id\x18\x01 \x01(\t\x12\x13\n\x0bsensor_type\x18\x02 \x01(\t\"\"\n\x10RegisterResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"7\n\x0e\x43\x61ptureRequest\x12\x11\n\tsensor_id\x18\x01 \x01(\t\x12\x12\n\nimage_data\x18\x02 \x01(\x0c\"!\n\x0f\x43\x61ptureResponse\x12\x0e\n\x06status\x18\x01 \x01(\t2{\n\rSensorService\x12\x35\n\x0eRegisterSensor\x12\x10.RegisterRequest\x1a\x11.RegisterResponse\x12\x33\n\x0eTriggerCapture\x12\x0f.CaptureRequest\x1a\x10.CaptureResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'sensor_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_TRIGGERREQUEST']._serialized_start=16
-  _globals['_TRIGGERREQUEST']._serialized_end=51
-  _globals['_CAPTURERESPONSE']._serialized_start=53
-  _globals['_CAPTURERESPONSE']._serialized_end=90
-  _globals['_EMPTYREQUEST']._serialized_start=92
-  _globals['_EMPTYREQUEST']._serialized_end=106
-  _globals['_SENSORIDSRESPONSE']._serialized_start=108
-  _globals['_SENSORIDSRESPONSE']._serialized_end=140
-  _globals['_SENSORSERVICE']._serialized_start=142
-  _globals['_SENSORSERVICE']._serialized_end=261
+  _globals['_REGISTERREQUEST']._serialized_start=16
+  _globals['_REGISTERREQUEST']._serialized_end=73
+  _globals['_REGISTERRESPONSE']._serialized_start=75
+  _globals['_REGISTERRESPONSE']._serialized_end=109
+  _globals['_CAPTUREREQUEST']._serialized_start=111
+  _globals['_CAPTUREREQUEST']._serialized_end=166
+  _globals['_CAPTURERESPONSE']._serialized_start=168
+  _globals['_CAPTURERESPONSE']._serialized_end=201
+  _globals['_SENSORSERVICE']._serialized_start=203
+  _globals['_SENSORSERVICE']._serialized_end=326
 # @@protoc_insertion_point(module_scope)

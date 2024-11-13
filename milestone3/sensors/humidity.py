@@ -28,7 +28,7 @@ if __name__ == "__main__":
   )
   
   humidity_sensor = HumiditySensor(args.id, type)
-  
+    
   if args.test:
     try:
       humidity_sensor.start()

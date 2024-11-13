@@ -11,13 +11,15 @@ from sensors.wind import WindSensor
 
 class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
     def __init__(self):
-        # Initialize sensors
-        self.sensors = {
-            '0001': HumiditySensor('0001', 'Humidity'),
-            '0002': TemperatureSensor('0002', 'Temperature'),
-            '0003': WindSensor('0003', 'Wind')
-        }
-        self.EventCaptures()
+        self.connected_sensors = {}
+
+    def RegisterSensor(self, request, context):
+        sensor_id = request.sensor_id
+        sensor_type = request.sensor_type
+        self.connected_sensors[sensor_id] = HumiditySensor(request.id, request.type)
+        print(f"Sensor {sensor_id} of type {sensor_type} registered.")
+        return sensor_pb2.RegisterResponse(status="Registered")
+    
     def TriggerCapture(self, request, context):
         """Triggered when the client sends a request to capture an image."""
         sensor_id = request.sensor_id
@@ -25,8 +27,7 @@ class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
         if sensor_id not in self.sensors:
             context.set_details(f"Sensor with ID {sensor_id} not found.")
             context.set_code(grpc.StatusCode.NOT_FOUND)
-            return sensor_pb2.CaptureResponse()  
-
+            return sensor_pb2.CaptureResponse() 
         # Get the correct sensor and trigger the image capture
         sensor = self.sensors[sensor_id]
         print("Received A trigger ")
@@ -37,10 +38,12 @@ class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
             context.set_details(f"Error capturing image: {e}")
             context.set_code(grpc.StatusCode.INTERNAL)
             return sensor_pb2.CaptureResponse()
+        
     def GetSensorIds(self, request, context):
         """Returns a list of all sensor IDs."""
         sensor_ids = list(self.sensors.keys())
         return sensor_pb2.SensorIdsResponse(ids=sensor_ids)
+    
     def EventCaptures(self):
         for sensor in self.sensors.values(): 
             try:

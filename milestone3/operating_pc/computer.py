@@ -53,12 +53,12 @@ class OperatingComputer:
                 print("Invalid option. Please enter (T) or (L).")
 
     def listen_to_sensors(self):
-      # Collect multiple IP addresses and their sensor types from the user
+      # Collect multiple sensors
       print("Currently selecting which sensors to listen to...")
       sensor_details = [] 
    
       while True:
-          id = input("Enter an IP address (or type 'done' to finish): ")
+          id = input("Enter an ID of sensor: ")
           
           if id.lower() == 'done':
               break
