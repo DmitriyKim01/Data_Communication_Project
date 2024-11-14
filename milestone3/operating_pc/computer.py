@@ -23,6 +23,10 @@ class OperatingComputer:
             raise Exception('Invalid trigger type')
         if not isinstance(listen, bool):
             raise Exception('Invalid listen type')
+        if not isinstance(Type, str):
+            raise Exception('Invalid sensor type')
+        if not isinstance(sensor, str):
+            raise Exception('Invalid sensor id')
         self.trigger = trigger
         self.listen = listen
         self.Type = Type
@@ -82,24 +86,12 @@ class OperatingComputer:
         while not self.connected:
             self.logger.info('Waiting for MQTT connection...')
             time.sleep(1)
-            
-        sensor_type = ''
-        sensor_id = ''
-        # Subscribe to a specific topic through the args params
-        if self.Type and self.sensor:
-            # Params validation
-            if self.Type.lower() not in [sensor_type.lower() for sensor_type in Config.SENSOR_TYPES]:
-                self.logger.error('Invalid sensor type')
-                exit(1)
-            if self.sensor.lower() not in [sensor_id.lower() for sensor_id in Config.SENSOR_IDS]:
-                self.logger.error('Invalid sensor ID')
-                exit(1)
-            sensor_type = self.Type.lower()
-            sensor_id = self.sensor.lower()
-        # Subscribe to a specific topic through user input
-        else:
-            sensor_type = Config.validate_options(Config.SENSOR_TYPES, 'Select a sensor type to listen to: ').lower()
-            sensor_id = Config.validate_options(Config.SENSOR_IDS, f'Select a {sensor_type} sensor ID to listen to: ').lower()
+        
+        if self.Type.lower() not in [sensor_type.lower() for sensor_type in Config.SENSOR_TYPES]:
+            self.logger.error('Invalid sensor type')
+            exit(1)
+        sensor_type = self.Type.lower()
+        sensor_id = self.sensor.lower()
         
         sensor_topic = self.validate_sensor_topic(sensor_type, sensor_id)
         self.client.subscribe(sensor_topic)
@@ -170,6 +162,7 @@ class OperatingComputer:
     def disconnect(self):
         self.client.loop_stop()
         self.client.disconnect()
+        self.is_alive = False
 
     def get_sensor_ids(self):
       '''Retrieve all sensor IDs from the gRPC server.'''
@@ -207,9 +200,16 @@ if __name__ == '__main__':
     logger.addFilter(ComputerNameFilter())
     computer = OperatingComputer(args.id, args.trigger, args.listen, args.Type, args.sensor)
     
-    if not args.trigger and not args.listen:
-        logger.error('Computer must either --trigger or --listen to sensors')
+    if not args.Type:
+        logger.error('Computer must specify a sensor type ( -T | --Type )')
         exit(1)
+    if not args.sensor:
+        logger.error('Computer must specify a sensor ID ( -s | --sensor )')
+        exit(1)
+    if not args.trigger and not args.listen:
+        logger.error('Computer must specify a trigger flag ( -t | --trigger ) or a listen flag ( -l | --listen )')
+        exit(1)
+
     try:
         computer.start()
     except KeyboardInterrupt:

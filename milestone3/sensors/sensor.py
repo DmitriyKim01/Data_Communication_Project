@@ -88,6 +88,7 @@ class Sensor(ABC):
       
       # Add event to queue
       self.eventsQueue.add_event(motion_event)
+      self.logger.info(f'MOTION EVENT HAPPENED')
     
   def stop(self):
     self.is_active = False
