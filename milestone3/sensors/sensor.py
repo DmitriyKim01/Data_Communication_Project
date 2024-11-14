@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from sensors.event_queue import Event, EventQueue
-from sensors.config import Config
+from event_queue import Event, EventQueue
+from config import Config
 from threading import Lock, Thread
 import paho.mqtt.client as mqtt
 import time
@@ -8,6 +8,7 @@ import logging
 import random
 import datetime
 import json
+import os
 # TODO: Uncomment when working with the Pi
 # from picamera2 import Picamera2
 
@@ -103,10 +104,15 @@ class Sensor(ABC):
     with self.lock:
         filename = f'{event.type}_{event.time}.jpg'
         # TODO: Implement the capture method
+        image = os.urandom(1024)
         self.logger.info(f'Capturing image {filename}')
-        time.sleep(1) 
+        return image
+        
   def capture(self):
-     return b"bite data for img"
+    image = os.urandom(1024)
+    self.logger.info(image)
+    return image
+   
   def publish_event(self, event):
     if not isinstance(event, Event):
       raise Exception('Invalid event type')

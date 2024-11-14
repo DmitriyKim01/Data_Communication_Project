@@ -16,12 +16,16 @@ class OperatingComputer:
             raise Exception('Invalid id type')
         self.id = id
         self.name = f'Operating Computer {self.id}' 
+        if not isinstance(trigger, bool):
+            raise Exception('Invalid trigger type')
+        if not isinstance(listen, bool):
+            raise Exception('Invalid listen type')
         self.trigger = trigger
         self.listen = listen
 
         # Logger
         self.logger = logging.getLogger(self.name)
-        self.logger = logging.LoggerAdapter(self.logger, {'sensor_name': f'OC {self.id}'})
+        self.logger = logging.LoggerAdapter(self.logger, {'computer_name': f'OC {self.id}'})
 
         # MQTT
         self.client = mqtt.Client(client_id=self.name, callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata=None)
@@ -156,14 +160,29 @@ class OperatingComputer:
           self.logger.error(f"Error retrieving sensor IDs: {e.details()}")
           return []
       
+      
+class SensorNameFilter(logging.Filter):
+    def filter(self, record):
+        if not hasattr(record, 'computer_name'):
+            record.sensor_name = 'N/A'
+        return True
+      
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Use `store_true` to create flags that don't require a value
     parser.add_argument('-i', '--id', default="0001", help="Identifies computer")
     parser.add_argument('-t', '--trigger', action='store_true', help="Allows computer to trigger sensors")
     parser.add_argument('-l', '--listen', action='store_true', help="Allows computer to listen to sensors")
-    
     args = parser.parse_args()
+    
+    logging.basicConfig(
+      level=logging.INFO,
+      format=f'%(levelname)s - [{Config.HOSTNAME}:{Config.PORT}] - (%(computer_name)s) - %(message)s'
+  )
+  
+    
+    if not args.trigger and not args.listen:
+        raise Exception('Computer must either trigger or listen to sensors')
 
     computer = OperatingComputer(args.id, args.trigger, args.listen)
     try:
