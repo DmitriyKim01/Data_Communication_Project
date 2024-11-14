@@ -9,9 +9,11 @@ import proto.sensor_pb2 as sensor_pb2
 import proto.sensor_pb2_grpc as sensor_pb2_grpc
 from config import Config
 import time
+import json
+import base64
 
 class OperatingComputer:
-    def __init__(self, id, trigger, listen):
+    def __init__(self, id, trigger, listen, Type, sensor):
         # Params
         if not isinstance(id, str):
             raise Exception('Invalid id type')
@@ -23,6 +25,9 @@ class OperatingComputer:
             raise Exception('Invalid listen type')
         self.trigger = trigger
         self.listen = listen
+        self.Type = Type
+        self.sensor = sensor
+        
         self.is_alive = False
         
         # Logger
@@ -46,12 +51,21 @@ class OperatingComputer:
             self.logger.info('Connected to MQTT broker')
         else:
             self.logger.info('Failed to connect to MQTT broker', return_code)
+            
     def on_message(self, client, userdata, message):
-        logger.info(f"Received message: {message.payload.decode('utf-8')}")
+        # Decode the message payload
+        payload= message.payload.decode('utf-8')
+        data = json.loads(payload)
+        encoded_image = data.get('image')
+        if encoded_image:
+            # Decode the encoded base64 image
+            decoded_image = base64.b64decode(encoded_image)
+            data['image'] = decoded_image
+        logger.info(f'Received message: {data}')
 
     def listen_and_trigger(self):
         while True:
-            option = input("What do you want to do? Enter (T) for trigger or (L) to listen: ")
+            option = input('What do you want to do? Enter (T) for trigger or (L) to listen: ')
             if str.lower(option) == 't':
                 self.trigger_capture()
                 break
@@ -59,94 +73,72 @@ class OperatingComputer:
                 self.listen_to_sensors()
                 break
             else:
-                print("Invalid option. Please enter (T) or (L).")
+                print('Invalid option. Please enter (T) or (L).')
 
     def listen_to_sensors(self):
+        # Connect to MQTT broker
         self.client.connect(Config.HOSTNAME, Config.PORT)
         self.client.loop_start()
-        sensor_topic = ''
-        
         while not self.connected:
-            self.logger.info("Waiting for MQTT connection...")
+            self.logger.info('Waiting for MQTT connection...')
             time.sleep(1)
-
-        sensor_type = Config.validate_options(Config.SENSOR_TYPES, 'Select a sensor type to listen to: ')
-        if sensor_type == 'All':
-            sensor_topic = '/sensor/#'
-        else:
-            sensor_id = Config.validate_options(Config.SENSOR_IDS, f'Select a {sensor_type.lower()} sensor ID to listen to: ')
-            if sensor_id != 'All':
-                sensor_topic = f'/sensor/{sensor_type}/{sensor_id}'
-            else:
-                sensor_topic = f'/sensor/{sensor_type}/+'
-                
-        self.client.subscribe(sensor_topic)
-        self.logger.info(f"Subscribed to topic: {sensor_topic}")
             
-    #   while self.is_alive:
-    #       id = input("Enter an IP address (or type 'done' to finish): ")
-          
-    #       if id.lower() == 'done':
-    #           break
-    #       # Ensure the user provides a valid sensor type for each IP
-    #       while True:
-    #           sensor_type = input("Enter sensor type for this IP: (H) for Humidity, (T) for Temperature, (W) for Wind, or (A) for any: ").lower()
-    #           if sensor_type in ['h', 't', 'w', 'a']:
-    #               break
-    #           else:
-    #               print("Invalid sensor type. Please enter (H), (T), (W), or (A).")
-    #       sensor_details.append((id, sensor_type))  
-
-    #   # Connect to the MQTT broker and start listening
-    #   self.client.connect(Config.HOSTNAME, Config.PORT)
-    #   self.client.loop_start()
-
-    #   # Subscribe to each topic based on the given IPs and their sensor types
-    #   for id, sensor_type in sensor_details:
-    #       # Map user input to actual sensor type strings
-    #       if sensor_type == "h":
-    #           sensor_type = "humidity"
-    #       elif sensor_type == "t":
-    #           sensor_type = "temperature"
-    #       elif sensor_type == "w":
-    #           sensor_type = "wind"
-    #       else:
-    #           sensor_type = "+" 
-
-    #       topic = f'/sensor/{sensor_type}/{id}'
-    #       self.client.subscribe(topic)
-    #       print(f"Subscribed to topic: {topic}")
-
-    # Keep the program running to listen for incoming messages
-    #   try:
-    #       while True:
-    #           if self.listen and not self.trigger:
-    #               pass
-    #           else:
-    #               self.act()  
-    #   except KeyboardInterrupt:
-    #       self.disconnect()
-    #       print("Disconnected from MQTT broker.")
-
+        sensor_type = ''
+        sensor_id = ''
+        # Subscribe to a specific topic through the args params
+        if self.Type and self.sensor:
+            # Params validation
+            if self.Type.lower() not in [sensor_type.lower() for sensor_type in Config.SENSOR_TYPES]:
+                self.logger.error('Invalid sensor type')
+                exit(1)
+            if self.sensor.lower() not in [sensor_id.lower() for sensor_id in Config.SENSOR_IDS]:
+                self.logger.error('Invalid sensor ID')
+                exit(1)
+            sensor_type = self.Type.lower()
+            sensor_id = self.sensor.lower()
+        # Subscribe to a specific topic through user input
+        else:
+            sensor_type = Config.validate_options(Config.SENSOR_TYPES, 'Select a sensor type to listen to: ').lower()
+            sensor_id = Config.validate_options(Config.SENSOR_IDS, f'Select a {sensor_type} sensor ID to listen to: ').lower()
+        
+        sensor_topic = self.validate_sensor_topic(sensor_type, sensor_id)
+        self.client.subscribe(sensor_topic)
+        self.logger.info(f'Subscribed to topic: {sensor_topic}')
+    
+    def validate_sensor_topic(self, sensor_type, sensor_id):
+        sensor_topic = ''
+        # Subscribe to any sensor topic
+        if sensor_type == 'all' and sensor_id == 'all':
+            sensor_topic = '/sensor/#'
+        # Subscribe to all sensors with a specific id
+        elif sensor_type == 'all' and sensor_id != 'all':
+            sensor_topic = f'/sensor/+/{sensor_id}'
+        # Subscribe to all sensors of a specific type
+        elif sensor_type != 'all' and sensor_id == 'all':
+            sensor_topic = f'/sensor/{sensor_type}/+'
+        # Subscribe to a specific sensor
+        else:
+            sensor_topic = f'/sensor/{sensor_type}/{sensor_id}'
+        return sensor_topic
 
     def trigger_capture(self):
       # Retrieve valid sensor IDs from the gRPC server
       valid_sensor_ids = self.get_sensor_ids()
 
       if not valid_sensor_ids:
-          self.logger.error("No valid sensor IDs found.")
+          self.logger.error('No valid sensor IDs found.')
           return
-      sensor_id = ""
+      sensor_id = ''
 
       # Keep asking for a sensor ID until the user provides a valid one
       while True:
-          sensor_id = input("Enter a sensor ID to trigger: ")
+          sensor_id = input('Enter a sensor ID to trigger: ')
           if sensor_id in valid_sensor_ids:
               break
           else:
-              print(f"Invalid sensor ID. Valid IDs are: {', '.join(valid_sensor_ids)}")
+              print(f'Invalid sensor ID. Valid IDs are: {', '.join(valid_sensor_ids)}')
 
-      """Trigger the sensor to capture an image using gRPC."""
+      '''Trigger the sensor to capture an image using gRPC.'''
       self.logger.info(f'Triggering capture for sensor {sensor_id}...')
       
       # Create a TriggerRequest object to send to the sensor
@@ -156,11 +148,11 @@ class OperatingComputer:
       try:
           response = self.stub.TriggerCapture(request)
           # Handle the image data response
-          self.logger.info(f"Capture response received from sensor {sensor_id}")
+          self.logger.info(f'Capture response received from sensor {sensor_id}')
           print(response.image_data)
-          self.logger.info(f"Image for sensor {sensor_id} saved successfully.")
+          self.logger.info(f'Image for sensor {sensor_id} saved successfully.')
       except grpc.RpcError as e:
-          self.logger.error(f"Error triggering sensor {sensor_id}: {e.details()}")
+          self.logger.error(f'Error triggering sensor {sensor_id}: {e.details()}')
 
 
     def start(self):
@@ -180,13 +172,13 @@ class OperatingComputer:
         self.client.disconnect()
 
     def get_sensor_ids(self):
-      """Retrieve all sensor IDs from the gRPC server."""
+      '''Retrieve all sensor IDs from the gRPC server.'''
       try:
           response = self.stub.GetSensorIds(sensor_pb2.EmptyRequest())
-          self.logger.info(f"Retrieved sensor IDs: {response.ids}")
+          self.logger.info(f'Retrieved sensor IDs: {response.ids}')
           return response.ids
       except grpc.RpcError as e:
-          self.logger.error(f"Error retrieving sensor IDs: {e.details()}")
+          self.logger.error(f'Error retrieving sensor IDs: {e.details()}')
           return []
       
       
@@ -196,12 +188,14 @@ class ComputerNameFilter(logging.Filter):
             record.computer_name = 'N/A'
         return True
       
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Use `store_true` to create flags that don't require a value
-    parser.add_argument('-i', '--id', default="0001", help="Identifies computer")
-    parser.add_argument('-t', '--trigger', action='store_true', help="Allows computer to trigger sensors")
-    parser.add_argument('-l', '--listen', action='store_true', help="Allows computer to listen to sensors")
+    parser.add_argument('-i', '--id', default='0001', help='Identifies computer')
+    parser.add_argument('-t', '--trigger', action='store_true', help='Allows computer to trigger sensors')
+    parser.add_argument('-l', '--listen', action='store_true', help='Allows computer to listen to sensors')
+    parser.add_argument('-T', '--Type', help='Sensor type')
+    parser.add_argument('-s', '--sensor', help='Sensor ID')
     args = parser.parse_args()
     
     logging.basicConfig(
@@ -211,7 +205,7 @@ if __name__ == "__main__":
     
     logger = logging.getLogger()
     logger.addFilter(ComputerNameFilter())
-    computer = OperatingComputer(args.id, args.trigger, args.listen)
+    computer = OperatingComputer(args.id, args.trigger, args.listen, args.Type, args.sensor)
     
     if not args.trigger and not args.listen:
         logger.error('Computer must either --trigger or --listen to sensors')
