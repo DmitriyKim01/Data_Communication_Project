@@ -1,7 +1,6 @@
 
 class Config:
-  HOSTNAME = "192.168.0.11"
-  # HOSTNAME = "35.183.124.89"
+  HOSTNAME = "35.183.124.89"
   PORT = 1883
 
   EVENT_TYPE = 'motion'

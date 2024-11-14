@@ -19,15 +19,12 @@ if __name__ == "__main__":
   
   logger = logging.getLogger()
   logger.addFilter(SensorNameFilter())
-    
-  sensors = []
-  for sensor_id in Config.ID_RANGE:
-    humidity_sensor = HumiditySensor(sensor_id, 'Humidity')
-    temperature_sensor = TemperatureSensor(sensor_id, 'Temperature')
-    wind_sensor = WindSensor(sensor_id, 'Wind')
-    sensors.append(humidity_sensor)
-    sensors.append(temperature_sensor)
-    sensors.append(wind_sensor)
+      
+  humidity_sensor = HumiditySensor('0001', 'Humidity')
+  temperature_sensor = TemperatureSensor('0002', 'Temperature')
+  wind_sensor = WindSensor('0003', 'Wind')
+  
+  sensors = [humidity_sensor, temperature_sensor, wind_sensor]
   
   try:
     for sensor in sensors:
