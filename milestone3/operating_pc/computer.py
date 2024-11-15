@@ -108,16 +108,10 @@ class OperatingComputer:
       if not valid_sensor_ids:
           self.logger.error('No valid sensor IDs found.')
           return
-      sensor_id = ''
-
-      # Keep asking for a sensor ID until the user provides a valid one
-      while True:
-          sensor_id = input('Enter a sensor ID to trigger: ')
-          if sensor_id in valid_sensor_ids:
-              break
-          else:
-              print(f'Invalid sensor ID. Valid IDs are: {', '.join(valid_sensor_ids)}')
-
+      sensor_id = self.sensor
+      if sensor_id not in valid_sensor_ids:
+        self.logger.error(f'Invalid sensor ID: {sensor_id}. Valid IDs are: {", ".join(valid_sensor_ids)}')
+        return
       '''Trigger the sensor to capture an image using gRPC.'''
       self.logger.info(f'Triggering capture for sensor {sensor_id}...')
       
