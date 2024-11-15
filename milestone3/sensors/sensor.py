@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from abc import ABC, abstractmethod
 from sensors.event_queue import Event, EventQueue
 from sensors.config import Config
@@ -9,13 +12,15 @@ import random
 import datetime
 import json
 import grpc
+
+from concurrent import futures
 import proto.sensor_pb2 as sensor_pb2
 import proto.sensor_pb2_grpc as grpc_sensor
 # TODO: Uncomment when working with the Pi
 # from picamera2 import Picamera2
 
-class Sensor(ABC):
-  def __init__(self, id, type):
+class Sensor(grpc_sensor.SingleSensor):
+  def __init__(self, id, type, port):
     # Params validation
     if not isinstance(id, str):
       raise Exception('Invalid sensor id')
@@ -24,7 +29,7 @@ class Sensor(ABC):
     # Params
     self.id = id
     self.type = type
-    
+    self.port = port
     # Internal
     self.is_active = True
     self.name = f'{type} Sensor {id}' 
@@ -45,8 +50,7 @@ class Sensor(ABC):
     self.client.on_connect = self.on_connect
 
     # GRPC
-    self.channel = grpc.insecure_channel()
-    self.stub = grpc_sensor.SensorServiceStub(self.channel)
+
 
   def start(self):
     # Connect to MQTT broker
@@ -112,8 +116,23 @@ class Sensor(ABC):
         # TODO: Implement the capture method
         self.logger.info(f'Capturing image {filename}')
         time.sleep(1) 
-  def capture(self):
-     return b"bite data for img"
+
+  def capture_trigger(self, request, context):
+    sensor_id = request.sensor_id
+    # Ensure the sensor exists
+    if sensor_id != self.id:
+      context.set_code(grpc.StatusCode.NOT_FOUND)
+      return sensor_pb2.CaptureResponse() 
+    # Get the correct sensor and trigger the image capture
+    print("Received A trigger ")
+    try:
+        image_data = self.capture()  
+        return sensor_pb2.CaptureResponse(image_data=image_data)
+    
+    except Exception as e:
+        context.set_details(f"Error capturing image: {e}")
+        context.set_code(grpc.StatusCode.INTERNAL)
+        return sensor_pb2.CaptureResponse()
   
   def publish_event(self, event):
     if not isinstance(event, Event):
@@ -132,9 +151,22 @@ class Sensor(ABC):
       self.logger.info(f'Message sent to topic {self.topic}') 
     else:
       self.logger.error(f'Failed to send message to topic {self.topic}')
-      
-  @abstractmethod
-  def get_sensor_value(self):
-      pass
+  
+  
+  # @abstractmethod
+  # def get_sensor_value(self):
+  #     pass
     
-    
+# Grcp part here
+def serve(sensor_id, port):
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    sensor_service = Sensor(sensor_id,"wind",port)
+    grpc_sensor.add_SingleSensorServicer_to_server(sensor_service, server)
+    server.add_insecure_port(f'[::]:{port}')
+    print(f'Sensor {sensor_id} server running on port {port}...')
+    server.start()
+    server.wait_for_termination()
+
+if __name__ == '__main__':
+    serve("0001","3000")
+
