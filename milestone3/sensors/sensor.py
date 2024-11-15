@@ -117,7 +117,7 @@ class Sensor(grpc_sensor.SingleSensor):
         self.logger.info(f'Capturing image {filename}')
         time.sleep(1) 
 
-  def capture_trigger(self, request, context):
+  def TriggerCapture(self, request, context):
     sensor_id = request.sensor_id
     # Ensure the sensor exists
     if sensor_id != self.id:

@@ -1,24 +1,23 @@
 syntax = "proto3";
 
-service SensorService {
-    rpc RegisterSensor (RegisterRequest) returns (RegisterResponse);
+service SensorServer {
+  rpc TriggerCapture (TriggerRequest) returns (CaptureResponse);
 }
 service SingleSensor {
     rpc TriggerCapture (TriggerRequest) returns (CaptureResponse);
 }
-message RegisterRequest {
-    string sensor_id = 1;
-    string sensor_type = 2;
-}
 
-message RegisterResponse {
-    string status = 1;
-}
 message TriggerRequest {
     string id = 1;
 }
-
-
 message CaptureResponse {
     bytes image_data = 1;
+}
+
+message TriggerRequest {
+  string sensor_id = 1;
+}
+
+message CaptureResponse {
+  bytes image_data = 1;
 }
