@@ -67,6 +67,14 @@ class OperatingComputer:
             data['image'] = decoded_image
         logger.info(f'Received message: {data}')
 
+    def is_valid_sensor_id(self, sensor_id):
+        '''Helper method to check if the sensor ID is valid.'''
+        valid_sensor_ids = self.get_sensor_ids()
+        if sensor_id not in valid_sensor_ids:
+            self.logger.error(f'Invalid sensor ID: {sensor_id}. Valid IDs are: {", ".join(valid_sensor_ids)}')
+            return False
+        return True
+
     def listen_to_sensors(self):
         # Connect to MQTT broker
         self.client.connect(Config.HOSTNAME, Config.PORT)
@@ -78,8 +86,13 @@ class OperatingComputer:
         if self.Type.lower() not in [sensor_type.lower() for sensor_type in Config.SENSOR_TYPES]:
             self.logger.error('Invalid sensor type')
             exit(1)
-        sensor_type = self.Type.lower()
+
         sensor_id = self.sensor.lower()
+
+        sensor_type = self.Type.lower()
+        if not self.is_valid_sensor_id(sensor_id):
+              self.client.disconnect()
+              return
         
         sensor_topic = self.validate_sensor_topic(sensor_type, sensor_id)
         self.client.subscribe(sensor_topic)
@@ -101,6 +114,7 @@ class OperatingComputer:
             sensor_topic = f'/sensor/{sensor_type}/{sensor_id}'
         return sensor_topic
 
+
     def trigger_capture(self):
       # Retrieve valid sensor IDs from the gRPC server
       valid_sensor_ids = self.get_sensor_ids()
@@ -108,10 +122,13 @@ class OperatingComputer:
       if not valid_sensor_ids:
           self.logger.error('No valid sensor IDs found.')
           return
-      sensor_id = self.sensor
-      if sensor_id not in valid_sensor_ids:
-        self.logger.error(f'Invalid sensor ID: {sensor_id}. Valid IDs are: {", ".join(valid_sensor_ids)}')
+        
+      sensor_id = self.sensor.lower()
+
+      if not self.is_valid_sensor_id(sensor_id):
+        self.client.disconnect()
         return
+
       '''Trigger the sensor to capture an image using gRPC.'''
       self.logger.info(f'Triggering capture for sensor {sensor_id}...')
       
