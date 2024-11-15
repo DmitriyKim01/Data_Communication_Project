@@ -67,18 +67,6 @@ class OperatingComputer:
             data['image'] = decoded_image
         logger.info(f'Received message: {data}')
 
-    def listen_and_trigger(self):
-        while True:
-            option = input('What do you want to do? Enter (T) for trigger or (L) to listen: ')
-            if str.lower(option) == 't':
-                self.trigger_capture()
-                break
-            elif str.lower(option) == 'l':
-                self.listen_to_sensors()
-                break
-            else:
-                print('Invalid option. Please enter (T) or (L).')
-
     def listen_to_sensors(self):
         # Connect to MQTT broker
         self.client.connect(Config.HOSTNAME, Config.PORT)
@@ -151,10 +139,14 @@ class OperatingComputer:
         self.is_alive = True
         
         if self.trigger and self.listen:
-            self.listen_and_trigger()
+            self.logger.info("Triggering and Listening sensors")
+            self.trigger_capture()
+            self.listen_to_sensors()
         elif self.trigger and not self.listen:
+            self.logger.info("Triggering sensors")
             self.trigger_capture()
         else:
+            self.logger.info("Listening to sensors")
             self.listen_to_sensors()
         while True:
             time.sleep(1)
