@@ -10,6 +10,7 @@ from sensors.temperature import TemperatureSensor
 from sensors.wind import WindSensor
 
 class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
+    
     def __init__(self):
         self.connected_sensors = {}
 
@@ -34,6 +35,7 @@ class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
         try:
             image_data = sensor.capture()  
             return sensor_pb2.CaptureResponse(image_data=image_data)
+        
         except Exception as e:
             context.set_details(f"Error capturing image: {e}")
             context.set_code(grpc.StatusCode.INTERNAL)
