@@ -119,10 +119,10 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
   
   
   def capture_event(self):
-    
     with self.lock:
+        image = os.urandom(4)
         self.logger.info(f'Capture triggered.')
-        return b"image"
+        return image
   
 
   def TriggerCapture(self, request, context):
@@ -193,6 +193,5 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
   def get_sensor_value(self):
       pass
     
-# Grcp part here
 
 
