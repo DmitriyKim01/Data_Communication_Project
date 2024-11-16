@@ -1,14 +1,18 @@
+<<<<<<< HEAD
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from sensors.config import Config
+=======
+from config import Config
+>>>>>>> 310c9a9ba2251fff143f0ab61cfa6a44cf0b31f4
 from threading import Thread
-from sensors.event_queue import EventQueue
+from event_queue import EventQueue
 import argparse
 import random
 import time
 import logging
-from sensors.sensor import Sensor
+from sensor import Sensor
 
 class WindSensor(Sensor):
   def get_sensor_value(self):

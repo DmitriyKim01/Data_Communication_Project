@@ -2,20 +2,21 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from abc import ABC, abstractmethod
-from sensors.event_queue import Event, EventQueue
-from sensors.config import Config
+from event_queue import Event, EventQueue
+from config import Config
 from threading import Lock, Thread
 import paho.mqtt.client as mqtt
+import base64
 import time
 import logging
 import random
 import datetime
 import json
 import grpc
-
 from concurrent import futures
 import proto.sensor_pb2 as sensor_pb2
 import proto.sensor_pb2_grpc as grpc_sensor
+
 # TODO: Uncomment when working with the Pi
 # from picamera2 import Picamera2
 
@@ -78,8 +79,8 @@ class Sensor(grpc_sensor.SingleSensor):
   def read_event_queue(self):
     while self.is_active:
         event = self.eventsQueue.get_event()
-        self.capture_event(event)
-        self.publish_event(event)
+        image= self.capture_event(event)
+        self.publish_event(event, image)
   
   def simulate_motion(self):
     while self.is_active:
@@ -97,7 +98,7 @@ class Sensor(grpc_sensor.SingleSensor):
       
       # Add event to queue
       self.eventsQueue.add_event(motion_event)
-      self.logger.debug(f'EVENT HAPPENED!')
+      self.logger.info(f'MOTION EVENT HAPPENED')
     
   def stop(self):
     self.is_active = False
@@ -113,7 +114,8 @@ class Sensor(grpc_sensor.SingleSensor):
         raise Exception('Invalid event type')
     with self.lock:
         filename = f'{event.type}_{event.time}.jpg'
-        # TODO: Implement the capture method
+        # The byte array is set to 4 bytes for testing purposes
+        image = os.urandom(4)
         self.logger.info(f'Capturing image {filename}')
         time.sleep(1) 
 
@@ -134,15 +136,20 @@ class Sensor(grpc_sensor.SingleSensor):
         context.set_code(grpc.StatusCode.INTERNAL)
         return sensor_pb2.CaptureResponse()
   
-  def publish_event(self, event):
+  def publish_event(self, event,image):
     if not isinstance(event, Event):
       raise Exception('Invalid event type')
+    if not isinstance(image, bytes):
+      raise Exception('Invalid image type')
+     # Serialize the byte array using base64 encoding
+    encoded_image = base64.b64encode(image).decode('utf-8')
     data = {
       'id': self.id,
       'name': self.name,
       'type': event.type,
       'time': event.time,
       'data': event.value,
+      'image': encoded_image
     }
     data = json.dumps(data)
     result = self.client.publish(topic = self.topic, payload = data)
