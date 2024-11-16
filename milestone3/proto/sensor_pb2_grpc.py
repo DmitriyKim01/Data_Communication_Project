@@ -46,6 +46,11 @@ class SensorServerStub(object):
                 request_serializer=sensor__pb2.SensorInfo.SerializeToString,
                 response_deserializer=sensor__pb2.EmptyResponse.FromString,
                 _registered_method=True)
+        self.GetSensorIds = channel.unary_unary(
+                '/SensorServer/GetSensorIds',
+                request_serializer=sensor__pb2.EmptyRequest.SerializeToString,
+                response_deserializer=sensor__pb2.AvailableSensors.FromString,
+                _registered_method=True)
 
 
 class SensorServerServicer(object):
@@ -63,6 +68,12 @@ class SensorServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetSensorIds(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_SensorServerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -75,6 +86,11 @@ def add_SensorServerServicer_to_server(servicer, server):
                     servicer.AddSensor,
                     request_deserializer=sensor__pb2.SensorInfo.FromString,
                     response_serializer=sensor__pb2.EmptyResponse.SerializeToString,
+            ),
+            'GetSensorIds': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetSensorIds,
+                    request_deserializer=sensor__pb2.EmptyRequest.FromString,
+                    response_serializer=sensor__pb2.AvailableSensors.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -131,6 +147,33 @@ class SensorServer(object):
             '/SensorServer/AddSensor',
             sensor__pb2.SensorInfo.SerializeToString,
             sensor__pb2.EmptyResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetSensorIds(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/SensorServer/GetSensorIds',
+            sensor__pb2.EmptyRequest.SerializeToString,
+            sensor__pb2.AvailableSensors.FromString,
             options,
             channel_credentials,
             insecure,

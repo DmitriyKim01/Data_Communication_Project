@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csensor.proto\"\x1c\n\x0eTriggerRequest\x12\n\n\x02id\x18\x01 \x01(\t\"%\n\x0f\x43\x61ptureResponse\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\"\x0f\n\rEmptyResponse\"2\n\nSensorInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\n\n\x02ip\x18\x02 \x01(\t\x12\x0c\n\x04port\x18\x03 \x01(\x05\x32o\n\x0cSensorServer\x12\x35\n\x10TriggerCapturePc\x12\x0f.TriggerRequest\x1a\x10.CaptureResponse\x12(\n\tAddSensor\x12\x0b.SensorInfo\x1a\x0e.EmptyResponse2C\n\x0cSingleSensor\x12\x33\n\x0eTriggerCapture\x12\x0f.TriggerRequest\x1a\x10.CaptureResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csensor.proto\"\x1c\n\x0eTriggerRequest\x12\n\n\x02id\x18\x01 \x01(\t\"%\n\x0f\x43\x61ptureResponse\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\"\x0f\n\rEmptyResponse\"2\n\nSensorInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\n\n\x02ip\x18\x02 \x01(\t\x12\x0c\n\x04port\x18\x03 \x01(\x05\"\x0e\n\x0c\x45mptyRequest\"\x1f\n\x10\x41vailableSensors\x12\x0b\n\x03ids\x18\x01 \x03(\t2\xa1\x01\n\x0cSensorServer\x12\x35\n\x10TriggerCapturePc\x12\x0f.TriggerRequest\x1a\x10.CaptureResponse\x12(\n\tAddSensor\x12\x0b.SensorInfo\x1a\x0e.EmptyResponse\x12\x30\n\x0cGetSensorIds\x12\r.EmptyRequest\x1a\x11.AvailableSensors2C\n\x0cSingleSensor\x12\x33\n\x0eTriggerCapture\x12\x0f.TriggerRequest\x1a\x10.CaptureResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -39,8 +39,12 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_EMPTYRESPONSE']._serialized_end=100
   _globals['_SENSORINFO']._serialized_start=102
   _globals['_SENSORINFO']._serialized_end=152
-  _globals['_SENSORSERVER']._serialized_start=154
-  _globals['_SENSORSERVER']._serialized_end=265
-  _globals['_SINGLESENSOR']._serialized_start=267
-  _globals['_SINGLESENSOR']._serialized_end=334
+  _globals['_EMPTYREQUEST']._serialized_start=154
+  _globals['_EMPTYREQUEST']._serialized_end=168
+  _globals['_AVAILABLESENSORS']._serialized_start=170
+  _globals['_AVAILABLESENSORS']._serialized_end=201
+  _globals['_SENSORSERVER']._serialized_start=204
+  _globals['_SENSORSERVER']._serialized_end=365
+  _globals['_SINGLESENSOR']._serialized_start=367
+  _globals['_SINGLESENSOR']._serialized_end=434
 # @@protoc_insertion_point(module_scope)

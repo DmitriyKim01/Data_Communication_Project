@@ -3,7 +3,9 @@ syntax = "proto3";
 service SensorServer {
   rpc TriggerCapturePc (TriggerRequest) returns (CaptureResponse);
   rpc AddSensor (SensorInfo) returns (EmptyResponse);
+  rpc GetSensorIds (EmptyRequest) returns (AvailableSensors);
 }
+
 service SingleSensor {
     rpc TriggerCapture (TriggerRequest) returns (CaptureResponse);
 }
@@ -24,3 +26,8 @@ message SensorInfo {
   int32  port = 3;
 }
 
+message EmptyRequest {}  
+
+message AvailableSensors {
+  repeated string ids = 1;  
+}

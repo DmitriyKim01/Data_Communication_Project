@@ -16,7 +16,6 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
         }
         
     def TriggerCapturePc(self, request, context):
-        # Establish connection with the sensor server
         print(self.sensors)
         try:
             current_sensor_ip = self.sensors[request.id]
@@ -36,6 +35,10 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
     def AddSensor(self, request, context):
         self.sensors[request.id] = f"{request.ip}:{request.port}"
         return sensor_pb2.EmptyResponse()
+    
+    def GetSensorIds(self, request, context):
+        sensor_ids = list(self.sensors.keys())  
+        return sensor_pb2.AvailableSensors(ids=sensor_ids)
     
 def serve():
     # Create the server and add the servicer
