@@ -20,8 +20,7 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
         print(self.sensors)
         try:
             current_sensor_ip = self.sensors[request.id]
-            if not current_sensor_ip:
-                raise Exception('Unknown ip')
+            print(current_sensor_ip)
             channel = grpc.insecure_channel(current_sensor_ip)  
             stub = grpc_sensor.SingleSensorStub(channel)
             trigger_request = sensor_pb2.TriggerRequest(id=request.id)

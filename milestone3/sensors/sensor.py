@@ -16,7 +16,7 @@ import grpc
 from concurrent import futures
 import proto.sensor_pb2 as sensor_pb2
 import proto.sensor_pb2_grpc as grpc_sensor
-
+from io import BytesIO
 # TODO: Uncomment when working with the Pi
 # from picamera2 import Picamera2
 
@@ -121,27 +121,23 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
   def capture_event(self):
     
     with self.lock:
-        image = os.urandom(4)
         self.logger.info(f'Capture triggered.')
-        return image
+        return b"image"
   
 
   def TriggerCapture(self, request, context):
-    with self.lock:
-      sensor_id = request.id
-      # Ensure the sensor exists
-      if sensor_id != self.id:
-        context.set_code(grpc.StatusCode.NOT_FOUND)
-        return sensor_pb2.CaptureResponse() 
-      # Get the correct sensor and trigger the image capture
-      print("Received A trigger ")
-      try:
-          image_data = self.capture_event()  
-          return sensor_pb2.CaptureResponse(image_data=image_data)
-      except Exception as e:
-          context.set_details(f"Error capturing image: {e}")
-          context.set_code(grpc.StatusCode.INTERNAL)
-          return sensor_pb2.CaptureResponse()
+    sensor_id = request.id
+    # Ensure the sensor exists
+    if sensor_id != self.id:
+      context.set_code(grpc.StatusCode.NOT_FOUND)
+      return sensor_pb2.CaptureResponse() 
+    try:
+        image_data = self.capture_event()  
+        return sensor_pb2.CaptureResponse(image_data=image_data)
+    except Exception as e:
+        context.set_details(f"Error capturing image: {e}")
+        context.set_code(grpc.StatusCode.INTERNAL)
+        return sensor_pb2.CaptureResponse()
   
   def publish_event(self, event,image):
     if not isinstance(event, Event):
@@ -179,7 +175,10 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
             print(f"Stopping gRPC server for sensor {self.id}...")
             self.server.stop(grace=None)  
             print(f"gRPC server for sensor {self.id} stopped.")
-            
+        if self.channel:
+          self.channel.close()
+          self.logger.info(f'Closed gRPC channel for sensor {self.id}')
+
 
   def stop(self):
       self.is_active = False
