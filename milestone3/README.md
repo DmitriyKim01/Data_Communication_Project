@@ -44,22 +44,6 @@ The computer can be configured with various command-line arguments to define its
 - **`-s, --sensor`**: Specifies the sensor ID.
 - **`-a, --all`**: Lists all available sensor IDs from the middleware.
 
-### Computer Use Cases
-
-1. **Trigger Computer**: Triggers a sensor via the middleware.
-   - **Run Command**: `python computer.py -t -T "type" -s "sensor id"`
-
-2. **Listen Computer**: Listens to MQTT topics based on the specified sensor.
-   - **Run Command**: `python computer.py -l -T "type" -s "sensor id"`
-
-3. **Both Trigger and Listen Computer**: Performs both trigger and listen actions.
-   - **Run Command**: `python computer.py -t -l -T "type" -s "sensor id"`
-
-4. **List Available Sensors**: Displays a list of all available sensor IDs.
-   - **Run Command**: `python computer.py -a`
-
----
-
 ## Running the Project
 
 ### Step 1: Set up Environment
