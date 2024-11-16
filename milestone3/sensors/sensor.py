@@ -179,6 +179,7 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
             print(f"Stopping gRPC server for sensor {self.id}...")
             self.server.stop(grace=None)  
             print(f"gRPC server for sensor {self.id} stopped.")
+            
 
   def stop(self):
       self.is_active = False

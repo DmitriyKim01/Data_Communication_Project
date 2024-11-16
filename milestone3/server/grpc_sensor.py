@@ -11,30 +11,33 @@ import proto.sensor_pb2_grpc as grpc_sensor
 class SensorServiceServicer(grpc_sensor.SensorServerServicer):
     
     def __init__(self):
-        pass
+        self.sensors = {
+            
+        }
         
     def TriggerCapturePc(self, request, context):
         # Establish connection with the sensor server
+        print(self.sensors)
         try:
-            # Create the gRPC channel to the sensor server
-          
-            channel = grpc.insecure_channel("localhost:3001")  
+            current_sensor_ip = self.sensors[request.id]
+            if not current_sensor_ip:
+                raise Exception('Unknown ip')
+            channel = grpc.insecure_channel(current_sensor_ip)  
             stub = grpc_sensor.SingleSensorStub(channel)
             trigger_request = sensor_pb2.TriggerRequest(id=request.id)
             response = stub.TriggerCapture(trigger_request)
+            print(response)
             return response
-
         except grpc.RpcError as e:
+            print("Test")
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Error during gRPC call: {e}")
             return sensor_pb2.CaptureResponse()
         
     def AddSensor(self, request, context):
-        id = request.id
-        ip = request.ip
-        port = request.port
-        print (f'{id}, {ip}, {port}')
+        self.sensors[request.id] = f"{request.ip}:{request.port}"
         return sensor_pb2.EmptyResponse()
+    
 def serve():
     # Create the server and add the servicer
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))

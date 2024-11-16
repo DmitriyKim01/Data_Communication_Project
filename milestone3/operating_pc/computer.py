@@ -147,7 +147,7 @@ class OperatingComputer:
           response = self.stub.TriggerCapturePc(request)
           # Handle the image data response
           self.logger.info(f'Capture response received from sensor {sensor_id}')
-          print(response.image_data)
+          self.logger.info(f'{response.image_data}')
           self.logger.info(f'Image for sensor {sensor_id} saved successfully.')
       except grpc.RpcError as e:
           self.logger.error(f'Error triggering sensor {sensor_id}: {e.details()}')
