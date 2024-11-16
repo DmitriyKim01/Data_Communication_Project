@@ -20,7 +20,7 @@ import proto.sensor_pb2_grpc as grpc_sensor
 # TODO: Uncomment when working with the Pi
 # from picamera2 import Picamera2
 
-class Sensor(grpc_sensor.SingleSensor):
+class Sensor(grpc_sensor.SingleSensor,ABC):
   def __init__(self, id, type, port):
     # Params validation
     if not isinstance(id, str):
@@ -158,22 +158,20 @@ class Sensor(grpc_sensor.SingleSensor):
       self.logger.info(f'Message sent to topic {self.topic}') 
     else:
       self.logger.error(f'Failed to send message to topic {self.topic}')
-  
-  
-  # @abstractmethod
-  # def get_sensor_value(self):
-  #     pass
-    
-# Grcp part here
-def serve(sensor_id, port):
+      
+  def serve(self):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    sensor_service = Sensor(sensor_id,"wind",port)
+    sensor_service = self
     grpc_sensor.add_SingleSensorServicer_to_server(sensor_service, server)
-    server.add_insecure_port(f'[::]:{port}')
-    print(f'Sensor {sensor_id} server running on port {port}...')
+    server.add_insecure_port(f'[::]:{self.port}')
+    print(f'Sensor {self.id} server running on port {self.port}...')
     server.start()
     server.wait_for_termination()
+  
+  @abstractmethod
+  def get_sensor_value(self):
+      pass
+    
+# Grcp part here
 
-if __name__ == '__main__':
-    serve("0001","3000")
 
