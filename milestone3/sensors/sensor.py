@@ -51,7 +51,7 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     self.client.on_connect = self.on_connect
 
     # GRPC
-
+    self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
   def start(self):
     # Connect to MQTT broker
@@ -67,6 +67,10 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     read_event_queue_thread = Thread(target=self.read_event_queue)
     self.threads.append(read_event_queue_thread)
     read_event_queue_thread.start()
+
+    start_server_thread = Thread(target=self.serve)
+    self.threads.append(start_server_thread)
+    start_server_thread.start()
     
     
   def on_connect(self, client, userdata, flags, return_code, properties):
@@ -100,14 +104,7 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       self.eventsQueue.add_event(motion_event)
       self.logger.info(f'MOTION EVENT HAPPENED')
     
-  def stop(self):
-    self.is_active = False
-    self.client.loop_stop()
-    for thread in self.threads:
-      if not isinstance(thread, Thread):
-        raise Exception('Invalid thread type')
-      thread.join(timeout=1)
-      time.sleep(1)  
+  
   
   def capture_event(self, event):
     if not isinstance(event, Event):
@@ -117,24 +114,25 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
         # The byte array is set to 4 bytes for testing purposes
         image = os.urandom(4)
         self.logger.info(f'Capturing image {filename}')
-        time.sleep(1) 
+        return image
+
 
   def TriggerCapture(self, request, context):
-    sensor_id = request.sensor_id
-    # Ensure the sensor exists
-    if sensor_id != self.id:
-      context.set_code(grpc.StatusCode.NOT_FOUND)
-      return sensor_pb2.CaptureResponse() 
-    # Get the correct sensor and trigger the image capture
-    print("Received A trigger ")
-    try:
-        image_data = self.capture()  
-        return sensor_pb2.CaptureResponse(image_data=image_data)
-    
-    except Exception as e:
-        context.set_details(f"Error capturing image: {e}")
-        context.set_code(grpc.StatusCode.INTERNAL)
-        return sensor_pb2.CaptureResponse()
+    with self.lock:
+      sensor_id = request.sensor_id
+      # Ensure the sensor exists
+      if sensor_id != self.id:
+        context.set_code(grpc.StatusCode.NOT_FOUND)
+        return sensor_pb2.CaptureResponse() 
+      # Get the correct sensor and trigger the image capture
+      print("Received A trigger ")
+      try:
+          image_data = self.capture()  
+          return sensor_pb2.CaptureResponse(image_data=image_data)
+      except Exception as e:
+          context.set_details(f"Error capturing image: {e}")
+          context.set_code(grpc.StatusCode.INTERNAL)
+          return sensor_pb2.CaptureResponse()
   
   def publish_event(self, event,image):
     if not isinstance(event, Event):
@@ -160,14 +158,28 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       self.logger.error(f'Failed to send message to topic {self.topic}')
       
   def serve(self):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    sensor_service = self
-    grpc_sensor.add_SingleSensorServicer_to_server(sensor_service, server)
-    server.add_insecure_port(f'[::]:{self.port}')
+    grpc_sensor.add_SingleSensorServicer_to_server(self, self.server)
+    self.server.add_insecure_port(f'[::]:{self.port}')
     print(f'Sensor {self.id} server running on port {self.port}...')
-    server.start()
-    server.wait_for_termination()
-  
+    self.server.start()
+    self.server.wait_for_termination()
+
+  def stop_server(self):
+        # Gracefully stop the gRPC server
+        if self.server:
+            print(f"Stopping gRPC server for sensor {self.id}...")
+            self.server.stop(grace=None)  
+            print(f"gRPC server for sensor {self.id} stopped.")
+
+  def stop(self):
+      self.is_active = False
+      self.client.loop_stop()
+      for thread in self.threads:
+        if not isinstance(thread, Thread):
+          raise Exception('Invalid thread type')
+        thread.join(timeout=1)
+      self.stop_server()
+
   @abstractmethod
   def get_sensor_value(self):
       pass
