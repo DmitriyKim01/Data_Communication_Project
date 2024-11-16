@@ -53,6 +53,9 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     # GRPC
     self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
+    self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
+    self.stub = grpc_sensor.SensorServiceStub(self.channel)
+
   def start(self):
     # Connect to MQTT broker
     self.client.connect(Config.HOSTNAME, Config.PORT)
