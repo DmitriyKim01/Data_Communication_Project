@@ -2,6 +2,7 @@ syntax = "proto3";
 
 service SensorServer {
   rpc TriggerCapturePc (TriggerRequest) returns (CaptureResponse);
+  rpc AddSensor (SensorInfo) returns (EmptyResponse);
 }
 service SingleSensor {
     rpc TriggerCapture (TriggerRequest) returns (CaptureResponse);
@@ -10,7 +11,16 @@ service SingleSensor {
 message TriggerRequest {
     string id = 1;
 }
+
 message CaptureResponse {
     bytes image_data = 1;
+}
+
+message EmptyResponse {}
+
+message SensorInfo {
+  string id = 1;
+  string ip = 2;
+  int32  port = 3;
 }
 

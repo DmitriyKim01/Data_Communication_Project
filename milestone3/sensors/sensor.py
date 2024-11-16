@@ -36,6 +36,7 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     self.name = f'{type} Sensor {id}' 
     self.eventsQueue = EventQueue()
     self.threads = []
+    self.ip = "localhost"
     
     # Logger
     self.logger = logging.getLogger(self.name)
@@ -55,7 +56,15 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
 
     self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
     self.stub = grpc_sensor.SensorServerStub(self.channel)
+    
+    #Create method for this -----------------
+    try:
+      request = sensor_pb2.SensorInfo(id=self.id,ip = self.ip, port = self.port)
+      response = self.stub.AddSensor(request)
+    except grpc.RpcError as e:
+      self.logger.error(f'Error triggering sensor {e.details()}')
 
+    #Create method for this -----------------
   def start(self):
     # Connect to MQTT broker
     self.client.connect(Config.HOSTNAME, Config.PORT)
@@ -86,7 +95,7 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
   def read_event_queue(self):
     while self.is_active:
         event = self.eventsQueue.get_event()
-        image= self.capture_event(event)
+        image= self.capture_event()
         self.publish_event(event, image)
   
   def simulate_motion(self):
@@ -109,14 +118,11 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     
   
   
-  def capture_event(self, event):
-    if not isinstance(event, Event):
-        raise Exception('Invalid event type')
+  def capture_event(self):
+    
     with self.lock:
-        filename = f'{event.type}_{event.time}.jpg'
-        # The byte array is set to 4 bytes for testing purposes
         image = os.urandom(4)
-        self.logger.info(f'Capturing image {filename}')
+        self.logger.info(f'Capture triggered.')
         return image
   
 

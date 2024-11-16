@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csensor.proto\"\x1c\n\x0eTriggerRequest\x12\n\n\x02id\x18\x01 \x01(\t\"%\n\x0f\x43\x61ptureResponse\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\x32\x45\n\x0cSensorServer\x12\x35\n\x10TriggerCapturePc\x12\x0f.TriggerRequest\x1a\x10.CaptureResponse2C\n\x0cSingleSensor\x12\x33\n\x0eTriggerCapture\x12\x0f.TriggerRequest\x1a\x10.CaptureResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csensor.proto\"\x1c\n\x0eTriggerRequest\x12\n\n\x02id\x18\x01 \x01(\t\"%\n\x0f\x43\x61ptureResponse\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\"\x0f\n\rEmptyResponse\"2\n\nSensorInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\n\n\x02ip\x18\x02 \x01(\t\x12\x0c\n\x04port\x18\x03 \x01(\x05\x32o\n\x0cSensorServer\x12\x35\n\x10TriggerCapturePc\x12\x0f.TriggerRequest\x1a\x10.CaptureResponse\x12(\n\tAddSensor\x12\x0b.SensorInfo\x1a\x0e.EmptyResponse2C\n\x0cSingleSensor\x12\x33\n\x0eTriggerCapture\x12\x0f.TriggerRequest\x1a\x10.CaptureResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,8 +35,12 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_TRIGGERREQUEST']._serialized_end=44
   _globals['_CAPTURERESPONSE']._serialized_start=46
   _globals['_CAPTURERESPONSE']._serialized_end=83
-  _globals['_SENSORSERVER']._serialized_start=85
-  _globals['_SENSORSERVER']._serialized_end=154
-  _globals['_SINGLESENSOR']._serialized_start=156
-  _globals['_SINGLESENSOR']._serialized_end=223
+  _globals['_EMPTYRESPONSE']._serialized_start=85
+  _globals['_EMPTYRESPONSE']._serialized_end=100
+  _globals['_SENSORINFO']._serialized_start=102
+  _globals['_SENSORINFO']._serialized_end=152
+  _globals['_SENSORSERVER']._serialized_start=154
+  _globals['_SENSORSERVER']._serialized_end=265
+  _globals['_SINGLESENSOR']._serialized_start=267
+  _globals['_SINGLESENSOR']._serialized_end=334
 # @@protoc_insertion_point(module_scope)

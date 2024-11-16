@@ -41,12 +41,23 @@ class SensorServerStub(object):
                 request_serializer=sensor__pb2.TriggerRequest.SerializeToString,
                 response_deserializer=sensor__pb2.CaptureResponse.FromString,
                 _registered_method=True)
+        self.AddSensor = channel.unary_unary(
+                '/SensorServer/AddSensor',
+                request_serializer=sensor__pb2.SensorInfo.SerializeToString,
+                response_deserializer=sensor__pb2.EmptyResponse.FromString,
+                _registered_method=True)
 
 
 class SensorServerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def TriggerCapturePc(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AddSensor(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -59,6 +70,11 @@ def add_SensorServerServicer_to_server(servicer, server):
                     servicer.TriggerCapturePc,
                     request_deserializer=sensor__pb2.TriggerRequest.FromString,
                     response_serializer=sensor__pb2.CaptureResponse.SerializeToString,
+            ),
+            'AddSensor': grpc.unary_unary_rpc_method_handler(
+                    servicer.AddSensor,
+                    request_deserializer=sensor__pb2.SensorInfo.FromString,
+                    response_serializer=sensor__pb2.EmptyResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -88,6 +104,33 @@ class SensorServer(object):
             '/SensorServer/TriggerCapturePc',
             sensor__pb2.TriggerRequest.SerializeToString,
             sensor__pb2.CaptureResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AddSensor(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/SensorServer/AddSensor',
+            sensor__pb2.SensorInfo.SerializeToString,
+            sensor__pb2.EmptyResponse.FromString,
             options,
             channel_credentials,
             insecure,

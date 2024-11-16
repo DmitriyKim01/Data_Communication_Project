@@ -2,18 +2,11 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import grpc as grpc
-from grpc import ServerInterceptor
 import server.config as Config
 from concurrent import futures
 import proto.sensor_pb2 as sensor_pb2
 import proto.sensor_pb2_grpc as grpc_sensor
 
-class IPLoggingInterceptor(ServerInterceptor):
-    def intercept_service(self, continuation, handler_call_details):
-        # Extract the client address (usually in the format of 'IP:PORT')
-        client_address = handler_call_details.invocation_metadata[0].value
-        print(f"Client connected from IP: {client_address}")
-        return continuation(handler_call_details)
     
 class SensorServiceServicer(grpc_sensor.SensorServerServicer):
     
@@ -35,10 +28,16 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Error during gRPC call: {e}")
             return sensor_pb2.CaptureResponse()
-
+        
+    def AddSensor(self, request, context):
+        id = request.id
+        ip = request.ip
+        port = request.port
+        print (f'{id}, {ip}, {port}')
+        return sensor_pb2.EmptyResponse()
 def serve():
     # Create the server and add the servicer
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10), interceptors=[IPLoggingInterceptor()])
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     grpc_sensor.add_SensorServerServicer_to_server(SensorServiceServicer(), server)
 
     # Bind the server to a port
