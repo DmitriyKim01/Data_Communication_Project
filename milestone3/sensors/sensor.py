@@ -54,7 +54,7 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
     self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
-    self.stub = grpc_sensor.SensorServiceStub(self.channel)
+    self.stub = grpc_sensor.SensorServerStub(self.channel)
 
   def start(self):
     # Connect to MQTT broker
@@ -118,11 +118,11 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
         image = os.urandom(4)
         self.logger.info(f'Capturing image {filename}')
         return image
-
+  
 
   def TriggerCapture(self, request, context):
     with self.lock:
-      sensor_id = request.sensor_id
+      sensor_id = request.id
       # Ensure the sensor exists
       if sensor_id != self.id:
         context.set_code(grpc.StatusCode.NOT_FOUND)
@@ -130,7 +130,7 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       # Get the correct sensor and trigger the image capture
       print("Received A trigger ")
       try:
-          image_data = self.capture()  
+          image_data = self.capture_event()  
           return sensor_pb2.CaptureResponse(image_data=image_data)
       except Exception as e:
           context.set_details(f"Error capturing image: {e}")

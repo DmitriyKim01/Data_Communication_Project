@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 service SensorServer {
-  rpc TriggerCapture (TriggerRequest) returns (CaptureResponse);
+  rpc TriggerCapturePc (TriggerRequest) returns (CaptureResponse);
 }
 service SingleSensor {
     rpc TriggerCapture (TriggerRequest) returns (CaptureResponse);
@@ -14,10 +14,3 @@ message CaptureResponse {
     bytes image_data = 1;
 }
 
-message TriggerRequest {
-  string sensor_id = 1;
-}
-
-message CaptureResponse {
-  bytes image_data = 1;
-}

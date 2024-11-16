@@ -51,7 +51,7 @@ class OperatingComputer:
 
         # gRPC
         self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
-        self.stub = sensor_pb2_grpc.SensorServiceStub(self.channel)
+        self.stub = sensor_pb2_grpc.SensorServerStub(self.channel)
 
     def on_connect(self, client, userdata, flags, return_code, properties):
         if return_code == 0:
@@ -71,13 +71,13 @@ class OperatingComputer:
             data['image'] = decoded_image
         logger.info(f'Received message: {data}')
 
-    def is_valid_sensor_id(self, sensor_id):
-        '''Helper method to check if the sensor ID is valid.'''
-        valid_sensor_ids = self.get_sensor_ids()
-        if sensor_id not in valid_sensor_ids:
-            self.logger.error(f'Invalid sensor ID: {sensor_id}. Valid IDs are: {", ".join(valid_sensor_ids)}')
-            return False
-        return True
+    # def is_valid_sensor_id(self, sensor_id):
+    #     '''Helper method to check if the sensor ID is valid.'''
+    #     valid_sensor_ids = self.get_sensor_ids()
+    #     if sensor_id not in valid_sensor_ids:
+    #         self.logger.error(f'Invalid sensor ID: {sensor_id}. Valid IDs are: {", ".join(valid_sensor_ids)}')
+    #         return False
+    #     return True
 
     def listen_to_sensors(self):
         # Connect to MQTT broker
@@ -124,27 +124,27 @@ class OperatingComputer:
 
     def trigger_capture(self):
       # Retrieve valid sensor IDs from the gRPC server
-      valid_sensor_ids = self.get_sensor_ids()
+    #   valid_sensor_ids = self.get_sensor_ids()
 
-      if not valid_sensor_ids:
-          self.logger.error('No valid sensor IDs found.')
-          return
+    #   if not valid_sensor_ids:
+    #       self.logger.error('No valid sensor IDs found.')
+    #       return
         
       sensor_id = self.sensor.lower()
 
-      if not self.is_valid_sensor_id(sensor_id):
-        self.client.disconnect()
-        return
+    #   if not self.is_valid_sensor_id(sensor_id):
+    #     self.client.disconnect()
+    #     return
 
       '''Trigger the sensor to capture an image using gRPC.'''
       self.logger.info(f'Triggering capture for sensor {sensor_id}...')
       
       # Create a TriggerRequest object to send to the sensor
-      request = sensor_pb2.TriggerRequest(sensor_id=sensor_id)
+      request = sensor_pb2.TriggerRequest(id=sensor_id)
 
       # Call the TriggerCapture method on the gRPC service
       try:
-          response = self.stub.TriggerCapture(request)
+          response = self.stub.TriggerCapturePc(request)
           # Handle the image data response
           self.logger.info(f'Capture response received from sensor {sensor_id}')
           print(response.image_data)
@@ -174,15 +174,15 @@ class OperatingComputer:
         self.client.disconnect()
         self.is_alive = False
 
-    def get_sensor_ids(self):
-      '''Retrieve all sensor IDs from the gRPC server.'''
-      try:
-          response = self.stub.GetSensorIds(sensor_pb2.EmptyRequest())
-          self.logger.info(f'Retrieved sensor IDs: {response.ids}')
-          return response.ids
-      except grpc.RpcError as e:
-          self.logger.error(f'Error retrieving sensor IDs: {e.details()}')
-          return []
+    # def get_sensor_ids(self):
+    #   '''Retrieve all sensor IDs from the gRPC server.'''
+    #   try:
+    #       response = self.stub.GetSensorIds(sensor_pb2.EmptyRequest())
+    #       self.logger.info(f'Retrieved sensor IDs: {response.ids}')
+    #       return response.ids
+    #   except grpc.RpcError as e:
+    #       self.logger.error(f'Error retrieving sensor IDs: {e.details()}')
+    #       return []
 
       
       

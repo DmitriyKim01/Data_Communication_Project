@@ -24,23 +24,19 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csensor.proto\"9\n\x0fRegisterRequest\x12\x11\n\tsensor_id\x18\x01 \x01(\t\x12\x13\n\x0bsensor_type\x18\x02 \x01(\t\"\"\n\x10RegisterResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"\x1c\n\x0eTriggerRequest\x12\n\n\x02id\x18\x01 \x01(\t\"%\n\x0f\x43\x61ptureResponse\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\x32\x46\n\rSensorService\x12\x35\n\x0eRegisterSensor\x12\x10.RegisterRequest\x1a\x11.RegisterResponse2C\n\x0cSingleSensor\x12\x33\n\x0eTriggerCapture\x12\x0f.TriggerRequest\x1a\x10.CaptureResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csensor.proto\"\x1c\n\x0eTriggerRequest\x12\n\n\x02id\x18\x01 \x01(\t\"%\n\x0f\x43\x61ptureResponse\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\x32\x45\n\x0cSensorServer\x12\x35\n\x10TriggerCapturePc\x12\x0f.TriggerRequest\x1a\x10.CaptureResponse2C\n\x0cSingleSensor\x12\x33\n\x0eTriggerCapture\x12\x0f.TriggerRequest\x1a\x10.CaptureResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'sensor_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_REGISTERREQUEST']._serialized_start=16
-  _globals['_REGISTERREQUEST']._serialized_end=73
-  _globals['_REGISTERRESPONSE']._serialized_start=75
-  _globals['_REGISTERRESPONSE']._serialized_end=109
-  _globals['_TRIGGERREQUEST']._serialized_start=111
-  _globals['_TRIGGERREQUEST']._serialized_end=139
-  _globals['_CAPTURERESPONSE']._serialized_start=141
-  _globals['_CAPTURERESPONSE']._serialized_end=178
-  _globals['_SENSORSERVICE']._serialized_start=180
-  _globals['_SENSORSERVICE']._serialized_end=250
-  _globals['_SINGLESENSOR']._serialized_start=252
-  _globals['_SINGLESENSOR']._serialized_end=319
+  _globals['_TRIGGERREQUEST']._serialized_start=16
+  _globals['_TRIGGERREQUEST']._serialized_end=44
+  _globals['_CAPTURERESPONSE']._serialized_start=46
+  _globals['_CAPTURERESPONSE']._serialized_end=83
+  _globals['_SENSORSERVER']._serialized_start=85
+  _globals['_SENSORSERVER']._serialized_end=154
+  _globals['_SINGLESENSOR']._serialized_start=156
+  _globals['_SINGLESENSOR']._serialized_end=223
 # @@protoc_insertion_point(module_scope)

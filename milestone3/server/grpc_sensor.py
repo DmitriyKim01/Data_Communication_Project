@@ -11,23 +11,23 @@ import proto.sensor_pb2_grpc as grpc_sensor
 class IPLoggingInterceptor(ServerInterceptor):
     def intercept_service(self, continuation, handler_call_details):
         # Extract the client address (usually in the format of 'IP:PORT')
-        client_address = handler_call_details.invocation_metadata
+        client_address = handler_call_details.invocation_metadata[0].value
         print(f"Client connected from IP: {client_address}")
         return continuation(handler_call_details)
     
-class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
+class SensorServiceServicer(grpc_sensor.SensorServerServicer):
     
     def __init__(self):
         pass
         
-    def TriggerCapture(self, request, context):
+    def TriggerCapturePc(self, request, context):
         # Establish connection with the sensor server
         try:
             # Create the gRPC channel to the sensor server
-            port = 50000 + int(request.sensor_id)
-            channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
+          
+            channel = grpc.insecure_channel("localhost:3001")  
             stub = grpc_sensor.SingleSensorStub(channel)
-            trigger_request = sensor_pb2.TriggerRequest(sensor_id=request.sensor_id)
+            trigger_request = sensor_pb2.TriggerRequest(id=request.id)
             response = stub.TriggerCapture(trigger_request)
             return response
 
@@ -39,7 +39,7 @@ class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
 def serve():
     # Create the server and add the servicer
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10), interceptors=[IPLoggingInterceptor()])
-    grpc_sensor.add_SensorServiceServicer_to_server(SensorServiceServicer(), server)
+    grpc_sensor.add_SensorServerServicer_to_server(SensorServiceServicer(), server)
 
     # Bind the server to a port
     server.add_insecure_port('[::]:50051')  
