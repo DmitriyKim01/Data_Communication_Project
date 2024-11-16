@@ -67,17 +67,13 @@ class OperatingComputer:
             data['image'] = decoded_image
         logger.info(f'Received message: {data}')
 
-    def listen_and_trigger(self):
-        while True:
-            option = input('What do you want to do? Enter (T) for trigger or (L) to listen: ')
-            if str.lower(option) == 't':
-                self.trigger_capture()
-                break
-            elif str.lower(option) == 'l':
-                self.listen_to_sensors()
-                break
-            else:
-                print('Invalid option. Please enter (T) or (L).')
+    def is_valid_sensor_id(self, sensor_id):
+        '''Helper method to check if the sensor ID is valid.'''
+        valid_sensor_ids = self.get_sensor_ids()
+        if sensor_id not in valid_sensor_ids:
+            self.logger.error(f'Invalid sensor ID: {sensor_id}. Valid IDs are: {", ".join(valid_sensor_ids)}')
+            return False
+        return True
 
     def listen_to_sensors(self):
         # Connect to MQTT broker
@@ -90,8 +86,13 @@ class OperatingComputer:
         if self.Type.lower() not in [sensor_type.lower() for sensor_type in Config.SENSOR_TYPES]:
             self.logger.error('Invalid sensor type')
             exit(1)
-        sensor_type = self.Type.lower()
+
         sensor_id = self.sensor.lower()
+
+        sensor_type = self.Type.lower()
+        if not self.is_valid_sensor_id(sensor_id):
+              self.client.disconnect()
+              return
         
         sensor_topic = self.validate_sensor_topic(sensor_type, sensor_id)
         self.client.subscribe(sensor_topic)
@@ -113,6 +114,7 @@ class OperatingComputer:
             sensor_topic = f'/sensor/{sensor_type}/{sensor_id}'
         return sensor_topic
 
+
     def trigger_capture(self):
       # Retrieve valid sensor IDs from the gRPC server
       valid_sensor_ids = self.get_sensor_ids()
@@ -120,15 +122,12 @@ class OperatingComputer:
       if not valid_sensor_ids:
           self.logger.error('No valid sensor IDs found.')
           return
-      sensor_id = ''
+        
+      sensor_id = self.sensor.lower()
 
-      # Keep asking for a sensor ID until the user provides a valid one
-      while True:
-          sensor_id = input('Enter a sensor ID to trigger: ')
-          if sensor_id in valid_sensor_ids:
-              break
-          else:
-              print(f'Invalid sensor ID. Valid IDs are: {', '.join(valid_sensor_ids)}')
+      if not self.is_valid_sensor_id(sensor_id):
+        self.client.disconnect()
+        return
 
       '''Trigger the sensor to capture an image using gRPC.'''
       self.logger.info(f'Triggering capture for sensor {sensor_id}...')
@@ -151,10 +150,14 @@ class OperatingComputer:
         self.is_alive = True
         
         if self.trigger and self.listen:
-            self.listen_and_trigger()
+            self.logger.info("Triggering and Listening sensors")
+            self.trigger_capture()
+            self.listen_to_sensors()
         elif self.trigger and not self.listen:
+            self.logger.info("Triggering sensors")
             self.trigger_capture()
         else:
+            self.logger.info("Listening to sensors")
             self.listen_to_sensors()
         while True:
             time.sleep(1)

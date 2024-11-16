@@ -37,6 +37,9 @@ class SensorServiceServicer(grpc_sensor.SensorServiceServicer):
             context.set_details(f"Error capturing image: {e}")
             context.set_code(grpc.StatusCode.INTERNAL)
             return sensor_pb2.CaptureResponse()
+        except grpc.RpcError as e:
+            self.logger.error(f'Error triggering sensor {sensor_id}: {e.details()}')
+            self.logger.exception("Exception details:")
     def GetSensorIds(self, request, context):
         """Returns a list of all sensor IDs."""
         sensor_ids = list(self.sensors.keys())
@@ -48,6 +51,6 @@ def serve():
     print("Server started, listening on port 50051...")
     server.start()
     server.wait_for_termination()
-
+    
 if __name__ == '__main__':
     serve()
