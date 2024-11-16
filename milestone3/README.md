@@ -110,17 +110,17 @@ python sensors/runner.py
 
 3. Trigger a Sensor:
  ```bash
-python computer.py -t -T "humidity" -s "sensor_01"
+python computer.py -t -T "humidity" -s "0001"
   ```
 
 4. Listen to Sensor Events:
  ```bash
-python computer.py -l -T "temperature" -s "sensor_02"
+python computer.py -l -T "temperature" -s "0002"
   ```
 
 5. Trigger and Listen:
  ```bash
-python computer.py -t -l -T "wind" -s "sensor_03"
+python computer.py -t -l -T "wind" -s "0003"
   ```
 
 ---
