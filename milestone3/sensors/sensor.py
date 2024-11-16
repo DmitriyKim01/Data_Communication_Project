@@ -16,9 +16,6 @@ import grpc
 from concurrent import futures
 import proto.sensor_pb2 as sensor_pb2
 import proto.sensor_pb2_grpc as grpc_sensor
-from io import BytesIO
-# TODO: Uncomment when working with the Pi
-# from picamera2 import Picamera2
 
 class Sensor(grpc_sensor.SingleSensor,ABC):
   def __init__(self, id, type, port):
@@ -27,6 +24,8 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       raise Exception('Invalid sensor id')
     if not isinstance(type, str):
       raise Exception('Invalid sensor type')
+    if not isinstance(port, int):
+      raise Exception('Invalid port number')
     # Params
     self.id = id
     self.type = type
@@ -41,9 +40,6 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     # Logger
     self.logger = logging.getLogger(self.name)
     self.logger = logging.LoggerAdapter(self.logger, {'sensor_name': f'{self.type[0:3]}. Sensor {self.id}'})
-  
-    # TODO: Uncomment when working with the Pi
-    # self.picam2 = Picamera2()
     self.lock = Lock()
     
     # MQTT
@@ -53,18 +49,10 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
 
     # GRPC
     self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-
     self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
     self.stub = grpc_sensor.SensorServerStub(self.channel)
-    
-    #Create method for this -----------------
-    try:
-      request = sensor_pb2.SensorInfo(id=self.id,ip = self.ip, port = self.port)
-      response = self.stub.AddSensor(request)
-    except grpc.RpcError as e:
-      self.logger.error(f'Error triggering sensor {e.details()}')
-
-    #Create method for this -----------------
+  
+  
   def start(self):
     # Connect to MQTT broker
     self.client.connect(Config.HOSTNAME, Config.PORT)
@@ -80,24 +68,41 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     self.threads.append(read_event_queue_thread)
     read_event_queue_thread.start()
 
+    # Start the GRPC server
+    self.send_address_to_server()
     start_server_thread = Thread(target=self.serve)
     self.threads.append(start_server_thread)
     start_server_thread.start()
     
-    
-  def on_connect(self, client, userdata, flags, return_code, properties):
-    if return_code == 0:
-        self.logger.info(f'Connected to MQTT broker')
-    else:
-        self.logger.info(f'Failed to connect to MQTT broker', return_code)
+  def stop(self):
+    # Stop any sensor's loops
+    self.is_active = False
+    # Stop the MQTT client
+    self.client.loop_stop()
+    # Stop any threads on the sensor
+    for thread in self.threads:
+      if not isinstance(thread, Thread):
+        raise Exception('Invalid thread type')
+      thread.join(timeout=1)
+    # Stop the gRPC server
+    if self.server:
+      self.logger.warning(f"Stopping GRPC server. Please wait...")
+      self.server.stop(grace=None)  
+      self.logger.warning(f"GRPC server stopped.")
+    if self.channel:
+      self.channel.close()
+      self.logger.warning(f'Closed GRPC channel')
+      
+  # MOTION SIMULATION METHODS -----------------------------
   
-  # TODO: Implement the read_event_queue method
+  # Read the event queue and publish the events
   def read_event_queue(self):
     while self.is_active:
         event = self.eventsQueue.get_event()
         image= self.capture_event()
         self.publish_event(event, image)
-  
+        
+  # Simulate motion detection
   def simulate_motion(self):
     while self.is_active:
       # Simulate motion detection
@@ -115,30 +120,17 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       # Add event to queue
       self.eventsQueue.add_event(motion_event)
       self.logger.info(f'MOTION EVENT HAPPENED')
-    
+      
+  # MQTT METHODS -----------------------------
   
+  # Triggered when the sensor connects to the MQTT broker
+  def on_connect(self, client, userdata, flags, return_code, properties):
+    if return_code == 0:
+        self.logger.info(f'Connected to MQTT broker')
+    else:
+        self.logger.info(f'Failed to connect to MQTT broker', return_code)  
   
-  def capture_event(self):
-    with self.lock:
-        image = os.urandom(4)
-        self.logger.info(f'Capture triggered.')
-        return image
-  
-
-  def TriggerCapture(self, request, context):
-    sensor_id = request.id
-    # Ensure the sensor exists
-    if sensor_id != self.id:
-      context.set_code(grpc.StatusCode.NOT_FOUND)
-      return sensor_pb2.CaptureResponse() 
-    try:
-        image_data = self.capture_event()  
-        return sensor_pb2.CaptureResponse(image_data=image_data)
-    except Exception as e:
-        context.set_details(f"Error capturing image: {e}")
-        context.set_code(grpc.StatusCode.INTERNAL)
-        return sensor_pb2.CaptureResponse()
-  
+  # Publish the event to the MQTT broker
   def publish_event(self, event,image):
     if not isinstance(event, Event):
       raise Exception('Invalid event type')
@@ -161,37 +153,55 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       self.logger.info(f'Message sent to topic {self.topic}') 
     else:
       self.logger.error(f'Failed to send message to topic {self.topic}')
-      
-  def serve(self):
-    grpc_sensor.add_SingleSensorServicer_to_server(self, self.server)
-    self.server.add_insecure_port(f'[::]:{self.port}')
-    print(f'Sensor {self.id} server running on port {self.port}...')
-    self.server.start()
-    self.server.wait_for_termination()
-
-  def stop_server(self):
-        # Gracefully stop the gRPC server
-        if self.server:
-            print(f"Stopping gRPC server for sensor {self.id}...")
-            self.server.stop(grace=None)  
-            print(f"gRPC server for sensor {self.id} stopped.")
-        if self.channel:
-          self.channel.close()
-          self.logger.info(f'Closed gRPC channel for sensor {self.id}')
-
-
-  def stop(self):
-      self.is_active = False
-      self.client.loop_stop()
-      for thread in self.threads:
-        if not isinstance(thread, Thread):
-          raise Exception('Invalid thread type')
-        thread.join(timeout=1)
-      self.stop_server()
-
+  
+  # ABSTRACT METHODS -----------------------------
+  # Each sensor type returns a different value
   @abstractmethod
   def get_sensor_value(self):
       pass
+
+  # GRPC METHODS -----------------------------
+  
+  # Starts the GRPC server
+  def serve(self):
+    grpc_sensor.add_SingleSensorServicer_to_server(self, self.server)
+    self.server.add_insecure_port(f'[::]:{self.port}')
+    self.logger.info(f"Starting GRPC server on address: {Config.GRPC_SERVER_ADDRESS}")
+    self.server.start()
+    self.server.wait_for_termination()
+
+  # Sends the sensor id, ip, and port to the GRPC server
+  def send_address_to_server(self):
+    try:
+      request = sensor_pb2.SensorInfo(id=self.id,ip = self.ip, port = self.port)
+      response = self.stub.AddSensor(request)
+    except grpc.RpcError as e:
+      self.logger.error(f'Error triggering sensor {e.details()}')
+  
+  # Triggered when the GRPC server receives a request to capture an image
+  def TriggerCapture(self, request, context):
+    sensor_id = request.id
+    # Ensure the sensor exists
+    if sensor_id != self.id:
+      context.set_code(grpc.StatusCode.NOT_FOUND)
+      return sensor_pb2.CaptureResponse() 
+    try:
+        image_data = self.capture_event()  
+        return sensor_pb2.CaptureResponse(image_data=image_data)
+    except Exception as e:
+        context.set_details(f"Error capturing image: {e}")
+        context.set_code(grpc.StatusCode.INTERNAL)
+        return sensor_pb2.CaptureResponse()
+  
+  # CAMERA METHODS -----------------------------
+  
+  # Return random byte array as an image
+  # TODO: Implement the camera capture
+  def capture_event(self):
+    with self.lock:
+        image = os.urandom(4)
+        self.logger.info(f'Capture triggered.')
+        return image
     
 
 

@@ -30,7 +30,7 @@ if __name__ == "__main__":
       format=f'%(levelname)s - ({type} {args.id}) - [{Config.HOSTNAME}:{Config.PORT}] - %(message)s'
   )
   
-  wind_sensor = WindSensor(args.id, type)
+  wind_sensor = WindSensor(args.id, type, 50124)
 
   if args.test:
     try:
