@@ -29,7 +29,7 @@ if __name__ == "__main__":
       format=f'%(levelname)s - ({type} {args.id}) - [{Config.HOSTNAME}:{Config.PORT}] - %(message)s'
   )
   
-  humidity_sensor = HumiditySensor(args.id, type)
+  humidity_sensor = HumiditySensor(args.id, type, 50125)
     
   if args.test:
     try:

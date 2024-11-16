@@ -42,7 +42,6 @@ class OperatingComputer:
         self.client = mqtt.Client(client_id=self.name, callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata=None)
         self.client.connect(Config.HOSTNAME, Config.PORT)
         self.client.on_message = self.on_message
-        
         self.topic = f'/operating/computer/{self.id}'
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
@@ -51,7 +50,29 @@ class OperatingComputer:
         # gRPC
         self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
         self.stub = sensor_pb2_grpc.SensorServerStub(self.channel)
+        
+    def start(self):
+        self.is_alive = True
+        
+        if self.trigger and self.listen:
+            self.logger.info("Triggering and Listening sensors")
+            self.trigger_capture()
+            self.listen_to_sensors()
+        elif self.trigger and not self.listen:
+            self.logger.info("Triggering sensors")
+            self.trigger_capture()
+        else:
+            self.logger.info("Listening to sensors")
+            self.listen_to_sensors()
+        while True:
+            time.sleep(1)
 
+    def disconnect(self):
+        self.client.loop_stop()
+        self.client.disconnect()
+        self.is_alive = False
+        
+    # MQTT ----------------------------------------------------------------
     def on_connect(self, client, userdata, flags, return_code, properties):
         if return_code == 0:
             self.connected = True
@@ -69,7 +90,7 @@ class OperatingComputer:
             decoded_image = base64.b64decode(encoded_image)
             data['image'] = decoded_image
         self.logger.info(f'Received message: {data}')
-
+        
     def listen_to_sensors(self):
         # Connect to MQTT broker
         self.client.connect(Config.HOSTNAME, Config.PORT)
@@ -92,7 +113,7 @@ class OperatingComputer:
         sensor_topic = self.validate_sensor_topic(sensor_type, sensor_id)
         self.client.subscribe(sensor_topic)
         self.logger.info(f'Subscribed to topic: {sensor_topic}')
-    
+        
     def validate_sensor_topic(self, sensor_type, sensor_id):
         sensor_topic = ''
         # Subscribe to any sensor topic
@@ -109,6 +130,9 @@ class OperatingComputer:
             sensor_topic = f'/sensor/{sensor_type}/{sensor_id}'
         return sensor_topic
 
+    # GRPC ----------------------------------------------------------------
+    
+    # Trigger the sensor to capture an image    
     def trigger_capture(self):
         sensor_id = self.sensor.lower()
 
@@ -128,27 +152,7 @@ class OperatingComputer:
         except grpc.RpcError as e:
             self.logger.error(f'Error triggering sensor {sensor_id}: {e.details()}')
 
-    def start(self):
-        self.is_alive = True
-        
-        if self.trigger and self.listen:
-            self.logger.info("Triggering and Listening sensors")
-            self.trigger_capture()
-            self.listen_to_sensors()
-        elif self.trigger and not self.listen:
-            self.logger.info("Triggering sensors")
-            self.trigger_capture()
-        else:
-            self.logger.info("Listening to sensors")
-            self.listen_to_sensors()
-        while True:
-            time.sleep(1)
-
-    def disconnect(self):
-        self.client.loop_stop()
-        self.client.disconnect()
-        self.is_alive = False
-
+    # HELPER METHODS ----------------------------------------------------------------
     def get_sensor_ids(self):
         """Fetch and return all available sensor IDs from the gRPC server."""
         try:
@@ -169,7 +173,7 @@ class OperatingComputer:
             return False
         return True
 
-
+# Filter for logging
 class ComputerNameFilter(logging.Filter):
     def filter(self, record):
         if not hasattr(record, 'computer_name'):
@@ -186,14 +190,14 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--sensor', help='Sensor ID')
     parser.add_argument('-a', '--all', action='store_true', help="Returns a list of available ids to trigger.")
     args = parser.parse_args()
-    
+    # Configure logging
     logging.basicConfig(
         level=logging.INFO,
         format=f'%(levelname)s - [{Config.HOSTNAME}:{Config.PORT}] - (%(computer_name)s) - %(message)s'
     )
-    
     logger = logging.getLogger()
     logger.addFilter(ComputerNameFilter())
+    
     # Check if -a argument is passed and no other arguments
     if args.all:
         if args.trigger or args.listen or args.Type or args.sensor:
@@ -202,9 +206,11 @@ if __name__ == '__main__':
         computer = OperatingComputer(args.id, False, False, '', '')
         logger.info(f"Available Sensor Ids are {computer.get_sensor_ids()}")
         exit(0)
-    
+        
+    # Create a new computer instance
     computer = OperatingComputer(args.id, args.trigger, args.listen, args.Type, args.sensor)
     
+    # Check if required arguments are passed
     if not args.Type:
         logger.error('Computer must specify a sensor type ( -T | --Type )')
         exit(1)
@@ -218,4 +224,6 @@ if __name__ == '__main__':
     try:
         computer.start()
     except KeyboardInterrupt:
+        logger.warning("Keyboard interruption trapped. Shutting down...")
         computer.disconnect()
+        logger.info("Shutdown complete.")
