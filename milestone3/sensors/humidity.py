@@ -1,4 +1,7 @@
-from config import Config
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from sensors.config import Config
 from threading import Thread
 import argparse
 import random
@@ -26,8 +29,8 @@ if __name__ == "__main__":
       format=f'%(levelname)s - ({type} {args.id}) - [{Config.HOSTNAME}:{Config.PORT}] - %(message)s'
   )
   
-  humidity_sensor = HumiditySensor(args.id, type)
-  
+  humidity_sensor = HumiditySensor(args.id, type, 50125)
+    
   if args.test:
     try:
       humidity_sensor.start()

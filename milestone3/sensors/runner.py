@@ -1,6 +1,9 @@
-from humidity import HumiditySensor
-from temperature import TemperatureSensor
-from wind import WindSensor
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from sensors.humidity import HumiditySensor
+from sensors.temperature import TemperatureSensor
+from sensors.wind import WindSensor
 import time
 import logging
 from config import Config
@@ -20,9 +23,9 @@ if __name__ == "__main__":
   logger = logging.getLogger()
   logger.addFilter(SensorNameFilter())
       
-  humidity_sensor = HumiditySensor('0001', 'Humidity')
-  temperature_sensor = TemperatureSensor('0002', 'Temperature')
-  wind_sensor = WindSensor('0003', 'Wind')
+  humidity_sensor = HumiditySensor('0001', 'Humidity',3001)
+  temperature_sensor = TemperatureSensor('0002', 'Temperature',3002)
+  wind_sensor = WindSensor('0003', 'Wind',3003)
   
   sensors = [humidity_sensor, temperature_sensor, wind_sensor]
   

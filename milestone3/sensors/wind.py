@@ -1,4 +1,7 @@
-from config import Config
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from sensors.config import Config
 from threading import Thread
 from event_queue import EventQueue
 import argparse
@@ -27,7 +30,7 @@ if __name__ == "__main__":
       format=f'%(levelname)s - ({type} {args.id}) - [{Config.HOSTNAME}:{Config.PORT}] - %(message)s'
   )
   
-  wind_sensor = WindSensor(args.id, type)
+  wind_sensor = WindSensor(args.id, type, 50124)
 
   if args.test:
     try:

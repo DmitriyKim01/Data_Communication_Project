@@ -1,4 +1,7 @@
-from config import Config
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from sensors.config import Config
 from threading import Thread
 from event_queue import EventQueue
 import argparse
@@ -16,20 +19,20 @@ if __name__ == "__main__":
   parser.add_argument('-i', '--id', default="0001")
   parser.add_argument('-t', '--test', action='store_true')
   args = parser.parse_args()
-  
+
   if not args.id:
     raise Exception('Missing sensor id')
-  
+
   type = 'Temperature'
   # Configure logging
   logging.basicConfig(
       level=logging.DEBUG,
       format=f'%(levelname)s - ({type} {args.id}) - [{Config.HOSTNAME}:{Config.PORT}] - %(message)s'
-      
+
   )
-  
-  temperature_sensor = TemperatureSensor(args.id, type)
-  
+
+  temperature_sensor = TemperatureSensor(args.id, type, 50123)
+
   if args.test:
     try:
       temperature_sensor.start()
@@ -42,8 +45,6 @@ if __name__ == "__main__":
     finally:
       logging.warning("Please wait for the system to shutdown...")
       temperature_sensor.stop()
-      logging.info("Shutdown complete.")
-
-      
+      logging.info("Shutdown complete.")     
     
         

@@ -4,7 +4,7 @@ import grpc
 import warnings
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import proto.sensor_pb2 as sensor__pb2
 
 GRPC_GENERATED_VERSION = '1.67.1'
@@ -27,7 +27,7 @@ if _version_not_supported:
     )
 
 
-class SensorServiceStub(object):
+class SensorServerStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -36,22 +36,33 @@ class SensorServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.TriggerCapture = channel.unary_unary(
-                '/SensorService/TriggerCapture',
+        self.TriggerCapturePc = channel.unary_unary(
+                '/SensorServer/TriggerCapturePc',
                 request_serializer=sensor__pb2.TriggerRequest.SerializeToString,
                 response_deserializer=sensor__pb2.CaptureResponse.FromString,
                 _registered_method=True)
+        self.AddSensor = channel.unary_unary(
+                '/SensorServer/AddSensor',
+                request_serializer=sensor__pb2.SensorInfo.SerializeToString,
+                response_deserializer=sensor__pb2.EmptyResponse.FromString,
+                _registered_method=True)
         self.GetSensorIds = channel.unary_unary(
-                '/SensorService/GetSensorIds',
+                '/SensorServer/GetSensorIds',
                 request_serializer=sensor__pb2.EmptyRequest.SerializeToString,
-                response_deserializer=sensor__pb2.SensorIdsResponse.FromString,
+                response_deserializer=sensor__pb2.AvailableSensors.FromString,
                 _registered_method=True)
 
 
-class SensorServiceServicer(object):
+class SensorServerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def TriggerCapture(self, request, context):
+    def TriggerCapturePc(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AddSensor(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -64,31 +75,36 @@ class SensorServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_SensorServiceServicer_to_server(servicer, server):
+def add_SensorServerServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'TriggerCapture': grpc.unary_unary_rpc_method_handler(
-                    servicer.TriggerCapture,
+            'TriggerCapturePc': grpc.unary_unary_rpc_method_handler(
+                    servicer.TriggerCapturePc,
                     request_deserializer=sensor__pb2.TriggerRequest.FromString,
                     response_serializer=sensor__pb2.CaptureResponse.SerializeToString,
+            ),
+            'AddSensor': grpc.unary_unary_rpc_method_handler(
+                    servicer.AddSensor,
+                    request_deserializer=sensor__pb2.SensorInfo.FromString,
+                    response_serializer=sensor__pb2.EmptyResponse.SerializeToString,
             ),
             'GetSensorIds': grpc.unary_unary_rpc_method_handler(
                     servicer.GetSensorIds,
                     request_deserializer=sensor__pb2.EmptyRequest.FromString,
-                    response_serializer=sensor__pb2.SensorIdsResponse.SerializeToString,
+                    response_serializer=sensor__pb2.AvailableSensors.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'SensorService', rpc_method_handlers)
+            'SensorServer', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('SensorService', rpc_method_handlers)
+    server.add_registered_method_handlers('SensorServer', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class SensorService(object):
+class SensorServer(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def TriggerCapture(request,
+    def TriggerCapturePc(request,
             target,
             options=(),
             channel_credentials=None,
@@ -101,9 +117,36 @@ class SensorService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/SensorService/TriggerCapture',
+            '/SensorServer/TriggerCapturePc',
             sensor__pb2.TriggerRequest.SerializeToString,
             sensor__pb2.CaptureResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AddSensor(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/SensorServer/AddSensor',
+            sensor__pb2.SensorInfo.SerializeToString,
+            sensor__pb2.EmptyResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -128,9 +171,81 @@ class SensorService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/SensorService/GetSensorIds',
+            '/SensorServer/GetSensorIds',
             sensor__pb2.EmptyRequest.SerializeToString,
-            sensor__pb2.SensorIdsResponse.FromString,
+            sensor__pb2.AvailableSensors.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class SingleSensorStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.TriggerCapture = channel.unary_unary(
+                '/SingleSensor/TriggerCapture',
+                request_serializer=sensor__pb2.TriggerRequest.SerializeToString,
+                response_deserializer=sensor__pb2.CaptureResponse.FromString,
+                _registered_method=True)
+
+
+class SingleSensorServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def TriggerCapture(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_SingleSensorServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'TriggerCapture': grpc.unary_unary_rpc_method_handler(
+                    servicer.TriggerCapture,
+                    request_deserializer=sensor__pb2.TriggerRequest.FromString,
+                    response_serializer=sensor__pb2.CaptureResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'SingleSensor', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('SingleSensor', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class SingleSensor(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def TriggerCapture(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/SingleSensor/TriggerCapture',
+            sensor__pb2.TriggerRequest.SerializeToString,
+            sensor__pb2.CaptureResponse.FromString,
             options,
             channel_credentials,
             insecure,
