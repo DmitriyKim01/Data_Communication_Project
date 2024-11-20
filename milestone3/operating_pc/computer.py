@@ -200,9 +200,7 @@ if __name__ == '__main__':
     
     # Check if -a argument is passed and no other arguments
     if args.all:
-        if args.trigger or args.listen or args.Type or args.sensor:
-            logger.error("The '-a' flag cannot be used with other arguments.")
-            exit(1)
+
         computer = OperatingComputer(args.id, False, False, '', '')
         logger.info(f"Available Sensor Ids are {computer.get_sensor_ids()}")
         exit(0)
