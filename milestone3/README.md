@@ -44,22 +44,6 @@ The computer can be configured with various command-line arguments to define its
 - **`-s, --sensor`**: Specifies the sensor ID.
 - **`-a, --all`**: Lists all available sensor IDs from the middleware.
 
-### Computer Use Cases
-
-1. **Trigger Computer**: Triggers a sensor via the middleware.
-   - **Run Command**: `python computer.py -t -T "type" -s "sensor id"`
-
-2. **Listen Computer**: Listens to MQTT topics based on the specified sensor.
-   - **Run Command**: `python computer.py -l -T "type" -s "sensor id"`
-
-3. **Both Trigger and Listen Computer**: Performs both trigger and listen actions.
-   - **Run Command**: `python computer.py -t -l -T "type" -s "sensor id"`
-
-4. **List Available Sensors**: Displays a list of all available sensor IDs.
-   - **Run Command**: `python computer.py -a`
-
----
-
 ## Running the Project
 
 ### Step 1: Set up Environment
@@ -83,19 +67,19 @@ Before running the system, ensure that each terminal has its environment variabl
 1. Open a third terminal window to run the computer, which can either trigger or listen to sensors, or perform both actions.
 2. Trigger a specific sensor:
   ```bash
-python computer.py -t -T "sensor type" -s "sensor id"
+python operating_pc/computer.py -t -T "sensor type" -s "sensor id"
   ```
 3. Listen to a specific sensor:
   ```bash
-python computer.py -l -T "sensor type" -s "sensor id"
+python operating_pc/computer.py -l -T "sensor type" -s "sensor id"
   ```
 4. Trigger and listen to sensors:
   ```bash
-python computer.py -t -l -T "sensor type" -s "sensor id"
+python operating_pc/computer.py -t -l -T "sensor type" -s "sensor id"
   ```
 5. List all available sensors:
   ```bash
-python computer.py -a
+python operating_pc/computer.py -a
   ```
 ### Example Workflow
 1. Start Middleware:
@@ -110,17 +94,17 @@ python sensors/runner.py
 
 3. Trigger a Sensor:
  ```bash
-python computer.py -t -T "humidity" -s "sensor_01"
+python operating_pc/computer.py -t -T "humidity" -s "0001"
   ```
 
 4. Listen to Sensor Events:
  ```bash
-python computer.py -l -T "temperature" -s "sensor_02"
+python operating_pc/computer.py -l -T "temperature" -s "0002"
   ```
 
 5. Trigger and Listen:
  ```bash
-python computer.py -t -l -T "wind" -s "sensor_03"
+python operating_pc/computer.py -t -l -T "wind" -s "0003"
   ```
 
 ---

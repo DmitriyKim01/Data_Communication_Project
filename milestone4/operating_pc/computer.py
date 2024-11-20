@@ -2,9 +2,6 @@ import logging
 import paho.mqtt.client as mqtt
 import argparse
 import grpc
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import proto.sensor_pb2 as sensor_pb2 
 import proto.sensor_pb2_grpc as sensor_pb2_grpc
 from config import Config
@@ -184,10 +181,11 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--id', default='0001', help='Identifies computer')
     parser.add_argument('-t', '--trigger', action='store_true', help='Allows computer to trigger sensors')
     parser.add_argument('-l', '--listen', action='store_true', help='Allows computer to listen to sensors')
-    parser.add_argument('-T', '--Type', help='Sensor type')
+    parser.add_argument('-T', '--type', help='Sensor type')
     parser.add_argument('-s', '--sensor', help='Sensor ID')
     parser.add_argument('-a', '--all', action='store_true', help="Returns a list of available ids to trigger.")
     args = parser.parse_args()
+
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
@@ -195,20 +193,14 @@ if __name__ == '__main__':
     )
     logger = logging.getLogger()
     logger.addFilter(ComputerNameFilter())
-    
-    # Check if -a argument is passed and no other arguments
+
+    # If -a is used, display available sensor IDs but don't exit
     if args.all:
-        if args.trigger or args.listen or args.Type or args.sensor:
-            logger.error("The '-a' flag cannot be used with other arguments.")
-            exit(1)
         computer = OperatingComputer(args.id, False, False, '', '')
-        logger.info(f"Available Sensor Ids are {computer.get_sensor_ids()}")
-        exit(0)
-        
-    # Create a new computer instance
-    computer = OperatingComputer(args.id, args.trigger, args.listen, args.type, args.sensor)
+        available_ids = computer.get_sensor_ids()
+        logger.info(f"Available Sensor Ids are {available_ids}")
     
-    # Check if required arguments are passed
+    # Check if required arguments are passed for normal operation
     if not args.type:
         logger.error('Computer must specify a sensor type ( -T | --type )')
         exit(1)
@@ -219,6 +211,9 @@ if __name__ == '__main__':
         logger.error('Computer must specify a trigger flag ( -t | --trigger ) or a listen flag ( -l | --listen )')
         exit(1)
 
+    # Create a new computer instance
+    computer = OperatingComputer(args.id, args.trigger, args.listen, args.type, args.sensor)
+    
     try:
         computer.start()
     except KeyboardInterrupt:
