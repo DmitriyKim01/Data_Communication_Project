@@ -114,8 +114,8 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       # Create new event
       event_type = Config.EVENT_TYPE
       event_time = datetime.datetime.now().strftime(Config.DATE_FORMAT)
-      humidity_value = self.get_sensor_value()
-      motion_event = Event(event_type, event_time, humidity_value)
+      sensor_value = self.get_sensor_value()
+      motion_event = Event(event_type, event_time, sensor_value)
       
       # Add event to queue
       self.eventsQueue.add_event(motion_event)
