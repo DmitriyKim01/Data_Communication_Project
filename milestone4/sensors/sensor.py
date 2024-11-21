@@ -1,6 +1,6 @@
 
 from abc import ABC, abstractmethod
-from event_queue import Event, EventQueue
+from sensors.event import Event
 from config import Config
 from threading import Lock, Thread
 import os
@@ -15,6 +15,7 @@ import grpc
 from concurrent import futures
 import proto.sensor_pb2 as sensor_pb2
 import proto.sensor_pb2_grpc as grpc_sensor
+import os 
 
 class Sensor(grpc_sensor.SingleSensor,ABC):
   def __init__(self, id, type, port):
@@ -32,7 +33,6 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     # Internal
     self.is_active = True
     self.name = f'{type} Sensor {id}' 
-    self.eventsQueue = EventQueue()
     self.threads = []
     self.ip = "localhost"
     
@@ -61,11 +61,6 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     motion_simulation_thread = Thread(target=self.simulate_motion)
     self.threads.append(motion_simulation_thread)
     motion_simulation_thread.start()
-    
-    # Read event queue
-    read_event_queue_thread = Thread(target=self.read_event_queue)
-    self.threads.append(read_event_queue_thread)
-    read_event_queue_thread.start()
 
     # Start the GRPC server
     self.send_address_to_server()
@@ -93,13 +88,6 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       self.logger.warning(f'Closed GRPC channel')
       
   # MOTION SIMULATION METHODS -----------------------------
-  
-  # Read the event queue and publish the events
-  def read_event_queue(self):
-    while self.is_active:
-        event = self.eventsQueue.get_event()
-        image= self.capture_event()
-        self.publish_event(event, image)
         
   # Simulate motion detection
   def simulate_motion(self):
@@ -116,9 +104,10 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       sensor_value = self.get_sensor_value()
       motion_event = Event(event_type, event_time, sensor_value)
       
-      # Add event to queue
-      self.eventsQueue.add_event(motion_event)
+      # Publish event to MQTT broker
       self.logger.info(f'MOTION EVENT HAPPENED')
+      image = self.capture_event()
+      self.publish_event(motion_event, image)
       
   # MQTT METHODS -----------------------------
   
@@ -130,7 +119,7 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
         self.logger.info(f'Failed to connect to MQTT broker', return_code)  
   
   # Publish the event to the MQTT broker
-  def publish_event(self, event,image):
+  def publish_event(self, event, image):
     if not isinstance(event, Event):
       raise Exception('Invalid event type')
     if not isinstance(image, bytes):

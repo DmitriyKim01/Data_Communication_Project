@@ -1,7 +1,6 @@
 
 from sensors.config import Config
 from threading import Thread
-from event_queue import EventQueue
 import argparse
 import random
 import time
