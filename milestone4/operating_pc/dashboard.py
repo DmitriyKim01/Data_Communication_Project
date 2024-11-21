@@ -17,14 +17,30 @@ app.layout = html.Div([
                         {'label': 'Option 1', 'value': 'option1'},
                         {'label': 'Option 2', 'value': 'option2'},
                     ],
-                    placeholder="Select an option", style={'width' : '70%'}
+                    placeholder="Select an option", style={'width' : '100%'}
                 )
-            , html.Button('Trigger', id='trigger-btn', n_clicks=0),], style={'display': 'flex', 'width': '100%'}), 
+            , html.Button('Trigger', id='trigger-btn', n_clicks=0),], style={'display': 'flex', 'width': '30%', 'gap':'3rem'}), 
 
             html.Div([
-                html.Button('Enable', id='enable-btn', n_clicks=0),
-                html.Button('Disable', id='disable-btn', n_clicks=0),
-            ], style={'display': 'inline-block', 'float': 'right', 'textAlign': 'right', 'width': '80%'}) 
+                html.Button('Enable', id='enable-btn', n_clicks=0,  style={
+                'width': '100px',
+                'height': '40px',
+                'borderRadius': '10px'  
+            }),
+                html.Button('Disable', id='disable-btn', n_clicks=0,style={
+                'width': '100px',
+                'height': '40px',
+                'borderRadius': '10px'  
+            }),
+            ], style={
+              'display': 'flex', 
+              'float': 'right',
+              'textAlign': 'right', 
+              'width': '80%',
+              'height': '100%',
+              'justifyContent': 'center',
+              'gap': '20px'
+            }) 
         ], style={'display': 'flex', 'alignItems': 'center', 'padding': '10px', 'borderBottom': '1px solid #ccc'}),
 
         # Middle Area (Two big boxes, horizontally next to each other)
@@ -52,8 +68,8 @@ app.layout = html.Div([
     html.Div([
         html.Button("Get IDs", id='get-ids-btn', n_clicks=0),
         html.Div(id='ids-area', style={'display': 'flex', 'flexWrap': 'wrap', 'padding': '10px'})
-    ], style={'width': '100%', 'display': 'block', 'textAlign': 'right', 'paddingRight': '20px'}),
-], style={'borderTop': '1px solid #ccc', 'border': '1px solid #ccc', 'padding': '5px', 'display': 'flex', 'flexDirection':'column', 'alignItems': 'flex-start'})
+    ], style={'width': '100%', 'height': '100%',  'display': 'flex', 'textAlign': 'right', 'paddingRight': '20px'}),
+], style={'borderTop': '1px solid #ccc', 'border': '1px solid #ccc', 'padding': '5px', 'display': 'flex', 'flexDirection':'column', 'alignItems': 'flex-start', 'height': '57px', 'gap' :'3px'})
 
     ], style={
         'width': '70%',  
