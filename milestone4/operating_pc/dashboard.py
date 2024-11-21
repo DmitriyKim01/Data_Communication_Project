@@ -1,3 +1,4 @@
+# -------------------------- Imports --------------------------
 import dash 
 from dash import dcc, html, Input, Output, callback, State, ctx
 import logging
@@ -11,25 +12,29 @@ import time
 import json
 import base64
 from computer import OperatingComputer
-import logging
 
+# -------------------------- Logging Setup --------------------------
 # Set up logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-
-# Initialize the Dash app
-app = dash.Dash(__name__)
-computer = OperatingComputer(id="0001", trigger=True, listen=True, type="all", sensor="0001")
-computer.listen_to_sensors()
-action_log = []
-mqtt_log = []
-# Filter for logging
+# Custom filter for logging
 class ComputerNameFilter(logging.Filter):
     def filter(self, record):
         if not hasattr(record, 'computer_name'):
             record.computer_name = 'N/A'
         return True
 
+# -------------------------- Dash App Initialization --------------------------
+# Initialize the Dash app
+app = dash.Dash(__name__)
+
+# Initialize logs
+action_log = []
+mqtt_log = []
+
+# -------------------------- Callback Functions --------------------------
+
+# Callback to get sensor IDs and dropdown options
 @app.callback(
     [Output('ids-area', 'children'),  
      Output('select-dropdown', 'options')], 
@@ -51,6 +56,8 @@ def get_sensor_ids_and_options(n_clicks):
         logging.error(f"Failed to fetch sensor IDs: {str(e)}")
         error_message = [html.Div("Failed to fetch sensor IDs.", style={'color': 'red'})]
         return error_message, []  
+
+# Callback to update and clear logs
 @app.callback(
     Output('action-log', 'children'),  
     [Input('trigger-btn', 'n_clicks'),  
@@ -75,13 +82,20 @@ def update_and_clear_logs(trigger_clicks, clear_clicks, selected_option):
 
     return action_log  
 
+# Callback to update MQTT log
+@app.callback(
+    Output('mqtt-log-list', 'children'),
+    Input('interval-component', 'n_intervals')  
+)
+def update_mqtt_log(n):
+    new_log_data = computer.get_log()  
+    return [html.Li(log) for log in new_log_data]
 
-# Layout --------------------------------------------------------------------------------------------------------
-# Layout --------------------------------------------------------------------------------------------------------
-app.layout = html.Div([  # error here not closed  
+# -------------------------- Layout --------------------------
+app.layout = html.Div([  
     # Container for the entire content, centered on the screen
     html.Div([
-        # Top Bar
+        # -------------------------- Top Bar --------------------------
         html.Div([
             html.Div([
                 dcc.Dropdown(
@@ -115,11 +129,10 @@ app.layout = html.Div([  # error here not closed
             })
         ], style={'display': 'flex', 'alignItems': 'center', 'padding': '10px', 'borderBottom': '1px solid #ccc'}),
 
-        # Middle Area (Two big boxes, horizontally next to each other)
-        html.Div([  # This was missing closing bracket
+        # -------------------------- Middle Area --------------------------
+        html.Div([  
             # MQTT Log Section
             html.Div([
-                # Header for MQTT Log with button
                 html.Div([
                     html.H5("MQTT Log", style={'margin': 0}),
                     html.Button('Clear Log', id='clear-mqtt-log-btn', style={
@@ -129,32 +142,27 @@ app.layout = html.Div([  # error here not closed
                     }),
                 ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),
 
-                # Placeholder for MQTT Log content
-               html.Div([
-            html.Ul(id='mqtt-log-list'),  
-            dcc.Interval(
-                id='interval-component',
-                interval=1 * 1000,  
-                n_intervals=0
-            ),
-            html.Div(
-                id='mqtt-log',
-                style={
-                    'height': '300px',
-                    'border': '1px solid black',
-                    'padding': '10px',
-                    'overflowY': 'auto',
-                    'marginTop': '15px'
-                },
-                children=[
-                    html.Ul(id='mqtt-log-list')  # Will dynamically update
-                ]
-            )
-        ], style={'width': '100%', 'display': 'inline-block', 'padding': '10px'})
-
-
+                html.Div([ 
+                    html.Ul(id='mqtt-log-list'),  
+                    dcc.Interval(
+                        id='interval-component',
+                        interval=1 * 1000,  
+                        n_intervals=0
+                    ),
+                    html.Div(
+                        id='mqtt-log',
+                        style={
+                            'height': '300px',
+                            'border': '1px solid black',
+                            'padding': '10px',
+                            'overflowY': 'auto',
+                            'marginTop': '15px'
+                        },
+                        children=[html.Ul(id='mqtt-log-list')]
+                    )
+                ], style={'width': '100%', 'display': 'inline-block', 'padding': '10px'})
             ], style={'width' : '48%'}), 
-            
+
             # Action Log Section
             html.Div([
                 html.Div([
@@ -174,16 +182,14 @@ app.layout = html.Div([  # error here not closed
                     'marginTop' : '15px'
                 })
             ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
-        ], style={'display': 'flex', 'justifyContent': 'space-between', 'padding': '10px'}),  # Middle area closing
+        ], style={'display': 'flex', 'justifyContent': 'space-between', 'padding': '10px'}),  
 
-        # Bottom Bar
+        # -------------------------- Bottom Bar --------------------------
         html.Div([
-            # Text on top-left
             html.Div([
                 html.P(["Sensor Requestor"], style={'margin': '1px', 'borderBottom': '1px solid #ccc', 'width': '20%'})
             ], style={'width': '100%', 'display': 'block', 'padding': '8px'}),
 
-            # Area with the button and ids container
             html.Div([
                 html.Button("Get IDs", id='get-ids-btn', n_clicks=0),
                 html.Div(id='ids-area', style={'display': 'flex', 'flexWrap': 'wrap', 'padding': '10px'})
@@ -203,9 +209,19 @@ app.layout = html.Div([  # error here not closed
     'alignItems': 'center',
     'justifyContent': 'center',
     'height': '100vh',  
-    'margin': 0, 
-    'padding': 0,  
+    'padding': '20px',
 })
 
+# -------------------------- Run the App --------------------------
 if __name__ == '__main__':
-  app.run_server(debug=True)
+   
+
+    # Create a new computer instance
+    computer = OperatingComputer("0001", True, True, "all", "alll")
+    
+    try:
+        computer.listen_to_sensors()
+        app.run_server(debug=False)
+
+    except KeyboardInterrupt:
+        computer.disconnect()

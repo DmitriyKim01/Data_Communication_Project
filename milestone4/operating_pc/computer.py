@@ -8,7 +8,7 @@ from config import Config
 import time
 import json
 import base64
-
+import threading
 class OperatingComputer:
     def __init__(self, id, trigger, listen, type, sensor):
         # Params
@@ -42,7 +42,7 @@ class OperatingComputer:
         self.client.on_message = self.on_message
         self.connected = False
         self.log = []
-
+        self.log_lock = threading.Lock()
         # gRPC
         self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
         self.stub = sensor_pb2_grpc.SensorServerStub(self.channel)
@@ -77,20 +77,27 @@ class OperatingComputer:
             self.logger.info('Failed to connect to MQTT broker', return_code)
             
     def on_message(self, client, userdata, message):
-        # Decode the message payload
         payload = message.payload.decode('utf-8')
         data = json.loads(payload)
         
-        # Get the encoded image
+        with self.log_lock:  
+            self.log.append(message)
+        
         encoded_image = data.get('image')
         if encoded_image:
-            self.log.append(base64.b64decode(encoded_image))        
-        return self.log
+            with self.log_lock:
+                self.log.append(base64.b64decode(encoded_image))
 
+    def get_log(self):
+        with self.log_lock:
+            return self.log
         
     def listen_to_sensors(self):
+        
         # Connect to MQTT broker
         self.client.connect(Config.HOSTNAME, Config.PORT)
+        self.connected = True
+
         self.client.loop_start()
         while not self.connected:
             self.logger.info('Waiting for MQTT connection...')
