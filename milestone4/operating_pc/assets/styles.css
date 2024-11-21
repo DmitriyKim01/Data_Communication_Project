@@ -27,22 +27,41 @@
   align-items: center;
   padding: 10px;
   border-bottom: 1px solid #ccc;
+  justify-content: space-around;
 }
 
 .top-bar-actions {
   display: flex;
-  width: 30%;
-  gap: 3rem;
+  gap: 1rem;
 }
 
-.top-bar-extra {
+/* Top Bar Extra Section */
+#top-bar-extra {
   display: flex;
-  float: right;
-  text-align: right;
-  width: 80%;
-  height: 100%;
-  justify-content: center;
-  gap: 20px;
+  align-items: center;
+  gap: 1rem;
+  
+}
+
+/* Dropdown Styling */
+.dropdown {
+  width: 150px;
+}
+
+/* Subscribe Button Styling */
+.subscribe-button {
+  height: 40px;
+  border-radius: 10px;
+  padding: 0 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.subscribe-button:hover {
+  background-color: #0056b3;
 }
 
 /* Middle Area */

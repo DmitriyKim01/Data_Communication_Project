@@ -122,7 +122,29 @@ app.layout = html.Div([
                 html.Button('Disable', id='disable-btn'),
             ], className="top-bar-actions"),
 
-            html.Div([], className="top-bar-extra"),
+            html.Div([
+    dcc.Dropdown(
+        id='sensor-id-dropdown',
+        options=[{'label': 'Any', 'value': 'Any'}],
+        placeholder="Select Sensor ID",
+        className="dropdown"
+    ),
+    dcc.Dropdown(
+        id='type-dropdown',
+        options=[
+            {'label': 'Humidity', 'value': 'Humidity'},
+            {'label': 'Temperature', 'value': 'Temperature'},
+            {'label': 'Wind', 'value': 'Wind'},
+            {'label': 'Any', 'value': 'Any'},
+            {'label': 'All', 'value': 'All'},
+            {'label': 'Images', 'value': 'Images'}
+        ],
+        placeholder="Select Type",
+        className="dropdown"
+    ),
+    html.Button('Subscribe', id='subscribe-btn', className="subscribe-button")
+], id="top-bar-extra"),
+
         ], className="top-bar"),
 
         # Middle Area
