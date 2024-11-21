@@ -84,11 +84,15 @@ class OperatingComputer:
         encoded_image = data.get('image')
         if encoded_image:
             with self.log_lock:
-                self.log.append("test")
+                self.log.append(f"Received data from sensor : {self.sensor} at {time.ctime()}")
 
     def get_log(self):
         with self.log_lock:
-            return self.log
+            if len(self.log) > 0:
+                return self.log[-1]  
+            else:
+                return None 
+
         
     def listen_to_sensors(self):
         

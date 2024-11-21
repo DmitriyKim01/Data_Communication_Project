@@ -1,5 +1,5 @@
 # -------------------------- Imports --------------------------
-import dash 
+import dash
 from dash import dcc, html, Input, Output, callback, State, ctx
 import logging
 import paho.mqtt.client as mqtt
@@ -31,7 +31,6 @@ app = dash.Dash(__name__)
 # Initialize logs
 action_log = []
 mqtt_log = []
-
 # -------------------------- Callback Functions --------------------------
 
 # Callback to get sensor IDs and dropdown options
@@ -82,15 +81,30 @@ def update_and_clear_logs(trigger_clicks, clear_clicks, selected_option):
 
     return action_log  
 
-# Callback to update MQTT log
 @app.callback(
     Output('mqtt-log-list', 'children'),
-    Input('interval-component', 'n_intervals')  
+    [Input('interval-component', 'n_intervals'),
+     Input('clear-mqtt-log-btn', 'n_clicks')] 
 )
-def update_mqtt_log(n):
-    new_log_data = computer.get_log()  
-    print(new_log_data)
-    return [html.Li(log) for log in new_log_data]
+def update_mqtt_log(n, clear_clicks):
+    # Clear MQTT log if the clear button was clicked
+    if ctx.triggered_id == 'clear-mqtt-log-btn':
+        mqtt_log.clear()
+
+    # Fetch the new log data
+    new_log_data = computer.get_log()
+
+    # If new log data is not empty or None, append it to the mqtt_log
+    if new_log_data:
+        mqtt_log.append(new_log_data)
+
+
+    if mqtt_log:
+        return [html.Li(log) for log in mqtt_log]
+    else:
+        return []  
+
+
 
 # -------------------------- Layout --------------------------
 app.layout = html.Div([  
@@ -144,24 +158,23 @@ app.layout = html.Div([
                 ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),
 
                 html.Div([ 
-    html.Div([
-        dcc.Interval(
-            id='interval-component',
-            interval=1 * 1000,  
-            n_intervals=0
-        ),
-        html.Ul(id='mqtt-log-list'),
-    ], id='mqtt-log',
-        style={
-            'height': '300px',
-            'border': '1px solid black',
-            'padding': '10px',
-            'overflowY': 'auto',
-            'marginTop': '15px'
-        },
-    )
-], style={'width': '100%', 'display': 'inline-block', 'padding': '10px'})
-
+                    html.Div([
+                        dcc.Interval(
+                            id='interval-component',
+                            interval=1 * 1000,  
+                            n_intervals=0
+                        ),
+                        html.Ul(id='mqtt-log-list'),
+                    ],
+                        style={
+                            'height': '300px',
+                            'border': '1px solid black',
+                            'padding': '10px',
+                            'overflowY': 'auto',
+                            'marginTop': '15px'
+                        },
+                    )
+                ], style={'width': '100%', 'display': 'inline-block', 'padding': '10px'})
             ], style={'width' : '48%'}), 
 
             # Action Log Section
@@ -215,13 +228,11 @@ app.layout = html.Div([
 
 # -------------------------- Run the App --------------------------
 if __name__ == '__main__':
-   
-
     # Create a new computer instance
     computer = OperatingComputer("0001", True, True, "all", "0001")
     
     try:
         computer.listen_to_sensors()
-        app.run_server(debug=False, port =1883)
+        app.run_server(debug=False, port=1883)
     except KeyboardInterrupt:
         computer.disconnect()
