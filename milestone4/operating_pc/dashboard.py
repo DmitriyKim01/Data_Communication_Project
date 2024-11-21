@@ -1,5 +1,5 @@
 import dash 
-from dash import dcc, html, Input, Output, callback
+from dash import dcc, html, Input, Output, callback, State
 import logging
 import paho.mqtt.client as mqtt
 import argparse
@@ -19,13 +19,43 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
 # Initialize the Dash app
 app = dash.Dash(__name__)
-messages = [
-    "Message 1",
-    "Message 2",
-    "Message 3",
-    "Message 4",
-    "Message 5"
-]
+
+action_log = []
+# Filter for logging
+class ComputerNameFilter(logging.Filter):
+    def filter(self, record):
+        if not hasattr(record, 'computer_name'):
+            record.computer_name = 'N/A'
+        return True
+computer = OperatingComputer(id="0001", trigger=True, listen=True, type="all", sensor="0001")
+
+@app.callback(
+    Output('action-log', 'children'),
+    Input('trigger-btn', 'n_clicks'),  
+    State('select-dropdown', 'value')  
+)
+def update_logs(n_clicks, selected_option):
+ 
+
+    if n_clicks > 0:  
+        if selected_option:
+            new_log = html.Li(f"Trigger button clicked at {time.ctime()}, selected option: {selected_option}")
+        else:
+            new_log = html.Li(f"Trigger button clicked at {time.ctime()}, no option selected")
+
+        action_log.append(new_log)  
+
+    return action_log
+
+def fetch_sensor_options():
+    try:
+        sensor_ids = computer.get_sensor_ids() 
+        return [{'label': f'Sensor {sensor_id}', 'value': sensor_id} for sensor_id in sensor_ids]
+    except Exception as e:
+        logging.error(f"Failed to fetch sensor options: {str(e)}")
+        return [] 
+    
+sensor_options = fetch_sensor_options()
 
 # Layout
 app.layout = html.Div([
@@ -35,14 +65,11 @@ app.layout = html.Div([
         html.Div([
             html.Div([
                 dcc.Dropdown(
-                    id='select-dropdown',
-                    options=[
-                        {'label': 'Option 1', 'value': 'option1'},
-                        {'label': 'Option 2', 'value': 'option2'},
-                    ],
-                    placeholder="Select an option", style={'width' : '100%'}
-                )
-            , html.Button('Trigger', id='trigger-btn', n_clicks=1 ),], style={'display': 'flex', 'width': '30%', 'gap':'3rem'}), 
+        id='select-dropdown',
+        options=sensor_options,  
+        placeholder="Select a sensor",
+        style={'width': '100%'}
+    ),html.Button('Trigger', id='trigger-btn', n_clicks=0 ),], style={'display': 'flex', 'width': '30%', 'gap':'3rem'}), 
 
             html.Div([
                 html.Button('Enable', id='enable-btn',  style={
@@ -113,27 +140,7 @@ app.layout = html.Div([
     'padding': 0,  
 }),
 
-action_log = []
-# Filter for logging
-class ComputerNameFilter(logging.Filter):
-    def filter(self, record):
-        if not hasattr(record, 'computer_name'):
-            record.computer_name = 'N/A'
-        return True
-computer = OperatingComputer(id="0001", trigger=True, listen=True, type="all", sensor="0001")
-@app.callback(
-    Output('action-log', 'children'),
-    Input('trigger-btn', 'n_clicks')  
-)
-def update_logs(n_clicks):
-    if n_clicks > 0:
-        print("Clicked")  # Print to the console when button is clicked
 
-        # Append new log entry as a <li> element
-        new_log = html.Li(f"Trigger button clicked at {time.ctime()}")  #\
-        action_log.append(new_log)  # Add to action log
-
-    return action_log 
-
+    
 if __name__ == '__main__':
   app.run_server(debug=True)
