@@ -1,5 +1,5 @@
 import dash 
-from dash import dcc, html, Input, Output, callback, State
+from dash import dcc, html, Input, Output, callback, State, ctx
 import logging
 import paho.mqtt.client as mqtt
 import argparse
@@ -30,21 +30,18 @@ class ComputerNameFilter(logging.Filter):
 computer = OperatingComputer(id="0001", trigger=True, listen=True, type="all", sensor="0001")
 
 @app.callback(
-    [Output('ids-area', 'children'),  # Update the IDs display area
-     Output('select-dropdown', 'options')],  # Update the dropdown options
-    Input('get-ids-btn', 'n_clicks')  # Trigger only when the "Get IDs" button is clicked
+    [Output('ids-area', 'children'),  
+     Output('select-dropdown', 'options')], 
+    Input('get-ids-btn', 'n_clicks')  
 )
 def get_sensor_ids_and_options(n_clicks):
-    if n_clicks == 0:  # Do nothing on page load
+    if n_clicks == 0:
         raise dash.exceptions.PreventUpdate
 
     try:
         # Fetch the sensor IDs
         sensor_ids = computer.get_sensor_ids()
-
-        # Create elements for the IDs area
         ids_area_content = [html.Div(f"Sensor ID: {sensor_id}", style={'margin': '5px'}) for sensor_id in sensor_ids]
-
         # Create options for the dropdown
         dropdown_options = [{'label': f'Sensor {sensor_id}', 'value': sensor_id} for sensor_id in sensor_ids]
 
@@ -52,24 +49,33 @@ def get_sensor_ids_and_options(n_clicks):
     except Exception as e:
         logging.error(f"Failed to fetch sensor IDs: {str(e)}")
         error_message = [html.Div("Failed to fetch sensor IDs.", style={'color': 'red'})]
-        return error_message, []  # Empty options for dropdown in case of failure
+        return error_message, []  
 @app.callback(
-    Output('action-log', 'children'),
-    Input('trigger-btn', 'n_clicks'),
-    Input('select-dropdown', 'value')  # Listen to dropdown value
-)
-def update_logs(n_clicks, selected_option):
-    if n_clicks > 0:
-        # Add log entry with the selected dropdown value
+    Output('action-log', 'children'),  
+    [Input('trigger-btn', 'n_clicks'),  
+     Input('clear-action-log-btn', 'n_clicks'), 
+     Input('select-dropdown', 'value')  
+])
+def update_and_clear_logs(trigger_clicks, clear_clicks, selected_option):
+    trigger_clicks = trigger_clicks or 0
+    clear_clicks = clear_clicks or 0
+    # Clear the log if the clear button was clicked
+    if ctx.triggered_id == 'clear-action-log-btn':
+        action_log.clear()  
+        msg = "Action log cleared."
+    elif ctx.triggered_id == 'trigger-btn':
         if selected_option:
             new_log = html.Li(f"Trigger button clicked at {time.ctime()}, selected option: {selected_option}")
         else:
             new_log = html.Li(f"Trigger button clicked at {time.ctime()}, no option selected")
+        action_log.append(new_log) 
+      
+        msg = "New log added."
 
-        action_log.append(new_log)  # Add to action log
+    return action_log  
 
-    return action_log
-# Layout remains unchanged except for an empty dropdown initially
+
+# Layout --------------------------------------------------------------------------------------------------------
 app.layout = html.Div([
     # Container for the entire content, centered on the screen
     html.Div([
@@ -78,7 +84,7 @@ app.layout = html.Div([
             html.Div([
                 dcc.Dropdown(
                     id='select-dropdown',
-                    options=[],  # Initially empty
+                    options=[], 
                     placeholder="Select a sensor",
                     style={'width': '100%'}
                 ),
@@ -108,18 +114,18 @@ app.layout = html.Div([
         ], style={'display': 'flex', 'alignItems': 'center', 'padding': '10px', 'borderBottom': '1px solid #ccc'}),
 
         # Middle Area (Two big boxes, horizontally next to each other)
-        html.Div([
+html.Div([
     # MQTT Log Section
     html.Div([
         # Header for MQTT Log with button
         html.Div([
             html.H5("MQTT Log", style={'margin': 0}),
             html.Button('Clear Log', id='clear-mqtt-log-btn', style={
-                'marginLeft': '10px',  # Spacing between header and button
+                'marginLeft': '10px', 
                 'height': '30px',
                 'alignSelf': 'center'
             }),
-        ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),  # Flexbox for horizontal alignment
+        ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}), 
 
         # Placeholder for MQTT Log content
         html.Div(id='mqtt-log', style={
@@ -138,12 +144,12 @@ app.layout = html.Div([
     html.Div([
         html.Div([
             html.H5("Action Log", style={'margin': 0}),
-            html.Button('Clear Log', id='clear-action-log-btn', style={
-                'marginLeft': '10px',  # Spacing between header and button
+            html.Button('Clear Log', id='clear-action-log-btn' , style={
+                'marginLeft': '10px',  
                 'height': '30px',
                 'alignSelf': 'center'
             }),
-        ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),  # Flexbox for horizontal alignment
+        ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}), 
 
         html.Ul(id='action-log', style={
             'height': '300px', 
