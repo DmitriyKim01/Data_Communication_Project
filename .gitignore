@@ -4,3 +4,8 @@ __pycache__/
 .venv
 log
 data
+*pb2_grpc.py
+*pb2.py
+build/
+dist/
+*.egg-info/

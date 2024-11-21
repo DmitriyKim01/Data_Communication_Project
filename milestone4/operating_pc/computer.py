@@ -2,9 +2,6 @@ import logging
 import paho.mqtt.client as mqtt
 import argparse
 import grpc
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import proto.sensor_pb2 as sensor_pb2 
 import proto.sensor_pb2_grpc as sensor_pb2_grpc
 from config import Config
@@ -13,7 +10,7 @@ import json
 import base64
 
 class OperatingComputer:
-    def __init__(self, id, trigger, listen, Type, sensor):
+    def __init__(self, id, trigger, listen, type, sensor):
         # Params
         if not isinstance(id, str):
             raise Exception('Invalid id type')
@@ -23,15 +20,15 @@ class OperatingComputer:
             raise Exception('Invalid trigger type')
         if not isinstance(listen, bool):
             raise Exception('Invalid listen type')
-        if not isinstance(Type, str):
+        if not isinstance(type, str):
             raise Exception('Invalid sensor type')
         if not isinstance(sensor, str):
             raise Exception('Invalid sensor id')
+        
         self.trigger = trigger
         self.listen = listen
-        self.Type = Type
+        self.type = type
         self.sensor = sensor
-        
         self.is_alive = False
         
         # Logger
@@ -41,8 +38,6 @@ class OperatingComputer:
         # MQTT
         self.client = mqtt.Client(client_id=self.name, callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata=None)
         self.client.connect(Config.HOSTNAME, Config.PORT)
-        self.client.on_message = self.on_message
-        self.topic = f'/operating/computer/{self.id}'
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.connected = False
@@ -186,10 +181,11 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--id', default='0001', help='Identifies computer')
     parser.add_argument('-t', '--trigger', action='store_true', help='Allows computer to trigger sensors')
     parser.add_argument('-l', '--listen', action='store_true', help='Allows computer to listen to sensors')
-    parser.add_argument('-T', '--Type', help='Sensor type')
+    parser.add_argument('-T', '--type', help='Sensor type')
     parser.add_argument('-s', '--sensor', help='Sensor ID')
     parser.add_argument('-a', '--all', action='store_true', help="Returns a list of available ids to trigger.")
     args = parser.parse_args()
+
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
@@ -197,20 +193,16 @@ if __name__ == '__main__':
     )
     logger = logging.getLogger()
     logger.addFilter(ComputerNameFilter())
-    
-    # Check if -a argument is passed and no other arguments
-    if args.all:
 
+    # If -a is used, display available sensor IDs but don't exit
+    if args.all:
         computer = OperatingComputer(args.id, False, False, '', '')
-        logger.info(f"Available Sensor Ids are {computer.get_sensor_ids()}")
-        exit(0)
-        
-    # Create a new computer instance
-    computer = OperatingComputer(args.id, args.trigger, args.listen, args.Type, args.sensor)
+        available_ids = computer.get_sensor_ids()
+        logger.info(f"Available Sensor Ids are {available_ids}")
     
-    # Check if required arguments are passed
-    if not args.Type:
-        logger.error('Computer must specify a sensor type ( -T | --Type )')
+    # Check if required arguments are passed for normal operation
+    if not args.type:
+        logger.error('Computer must specify a sensor type ( -T | --type )')
         exit(1)
     if not args.sensor:
         logger.error('Computer must specify a sensor ID ( -s | --sensor )')
@@ -219,6 +211,9 @@ if __name__ == '__main__':
         logger.error('Computer must specify a trigger flag ( -t | --trigger ) or a listen flag ( -l | --listen )')
         exit(1)
 
+    # Create a new computer instance
+    computer = OperatingComputer(args.id, args.trigger, args.listen, args.type, args.sensor)
+    
     try:
         computer.start()
     except KeyboardInterrupt:

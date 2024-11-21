@@ -1,6 +1,4 @@
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from abc import ABC, abstractmethod
 from event_queue import Event, EventQueue
 from config import Config
