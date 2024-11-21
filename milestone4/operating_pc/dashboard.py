@@ -53,7 +53,22 @@ def get_sensor_ids_and_options(n_clicks):
         logging.error(f"Failed to fetch sensor IDs: {str(e)}")
         error_message = [html.Div("Failed to fetch sensor IDs.", style={'color': 'red'})]
         return error_message, []  # Empty options for dropdown in case of failure
+@app.callback(
+    Output('action-log', 'children'),
+    Input('trigger-btn', 'n_clicks'),
+    Input('select-dropdown', 'value')  # Listen to dropdown value
+)
+def update_logs(n_clicks, selected_option):
+    if n_clicks > 0:
+        # Add log entry with the selected dropdown value
+        if selected_option:
+            new_log = html.Li(f"Trigger button clicked at {time.ctime()}, selected option: {selected_option}")
+        else:
+            new_log = html.Li(f"Trigger button clicked at {time.ctime()}, no option selected")
 
+        action_log.append(new_log)  # Add to action log
+
+    return action_log
 # Layout remains unchanged except for an empty dropdown initially
 app.layout = html.Div([
     # Container for the entire content, centered on the screen
@@ -94,18 +109,52 @@ app.layout = html.Div([
 
         # Middle Area (Two big boxes, horizontally next to each other)
         html.Div([
-            html.Div([
-                html.H5("MQTT Log"),
-                # Placeholder for MQTT Log content
-                html.Div(id='mqtt-log', style={'height': '300px', 'border': '1px solid black', 'padding': '10px', 'overflowY': 'auto'}, children=[
-                    html.Ul(id='mqtt-log-list')
-                ])
-            ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
-            html.Div([
-                html.H5("Action Log"),
-                html.Ul(id='action-log', style={'height': '300px', 'border': '1px solid black', 'padding': '10px', 'overflowY': 'auto'})
-            ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
-        ], style={'display': 'flex', 'justifyContent': 'space-between', 'padding': '10px'}),
+    # MQTT Log Section
+    html.Div([
+        # Header for MQTT Log with button
+        html.Div([
+            html.H5("MQTT Log", style={'margin': 0}),
+            html.Button('Clear Log', id='clear-mqtt-log-btn', style={
+                'marginLeft': '10px',  # Spacing between header and button
+                'height': '30px',
+                'alignSelf': 'center'
+            }),
+        ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),  # Flexbox for horizontal alignment
+
+        # Placeholder for MQTT Log content
+        html.Div(id='mqtt-log', style={
+            'height': '300px', 
+            'border': '1px solid black', 
+            'padding': '10px', 
+            'overflowY': 'auto',
+            'marginTop' : '15px'
+
+        }, children=[
+            html.Ul(id='mqtt-log-list')
+        ])
+    ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
+
+    # Action Log Section
+    html.Div([
+        html.Div([
+            html.H5("Action Log", style={'margin': 0}),
+            html.Button('Clear Log', id='clear-action-log-btn', style={
+                'marginLeft': '10px',  # Spacing between header and button
+                'height': '30px',
+                'alignSelf': 'center'
+            }),
+        ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),  # Flexbox for horizontal alignment
+
+        html.Ul(id='action-log', style={
+            'height': '300px', 
+            'border': '1px solid black', 
+            'padding': '10px', 
+            'overflowY': 'auto',
+            'marginTop' : '15px'
+        })
+    ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
+], style={'display': 'flex', 'justifyContent': 'space-between', 'padding': '10px'}),
+
 
         # Bottom Bar
         html.Div([
