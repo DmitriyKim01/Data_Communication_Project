@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from event_queue import Event, EventQueue
 from config import Config
 from threading import Lock, Thread
+import os
 import paho.mqtt.client as mqtt
 import base64
 import time

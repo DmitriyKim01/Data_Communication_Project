@@ -16,7 +16,6 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
             stub = grpc_sensor.SingleSensorStub(channel)
             trigger_request = sensor_pb2.TriggerRequest(id=request.id)
             response = stub.TriggerCapture(trigger_request)
-            print(f"Triggered capture on sensor {request.id}")
             return response
         except grpc.RpcError as e:
             context.set_code(grpc.StatusCode.INTERNAL)
