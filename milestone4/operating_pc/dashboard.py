@@ -106,131 +106,110 @@ def update_mqtt_log(n, clear_clicks):
 
 
 
-# -------------------------- Layout --------------------------
-app.layout = html.Div([  
-    # Container for the entire content, centered on the screen
+app.layout = html.Div([
+    # Container for the entire content
     html.Div([
-        # -------------------------- Top Bar --------------------------
+        # Top Bar
         html.Div([
             html.Div([
                 dcc.Dropdown(
                     id='select-dropdown',
-                    options=[], 
+                    options=[],
                     placeholder="Select a sensor",
-                    style={'width': '100%'}
                 ),
                 html.Button('Trigger', id='trigger-btn', n_clicks=0),
-            ], style={'display': 'flex', 'width': '30%', 'gap': '3rem'}),
+                html.Button('Enable', id='enable-btn'),
+                html.Button('Disable', id='disable-btn'),
+            ], className="top-bar-actions"),
 
-            html.Div([
-                html.Button('Enable', id='enable-btn', style={
-                    'width': '100px',
-                    'height': '40px',
-                    'borderRadius': '10px'
-                }),
-                html.Button('Disable', id='disable-btn', style={
-                    'width': '100px',
-                    'height': '40px',
-                    'borderRadius': '10px'
-                }),
-            ], style={
-                'display': 'flex',
-                'float': 'right',
-                'textAlign': 'right',
-                'width': '80%',
-                'height': '100%',
-                'justifyContent': 'center',
-                'gap': '20px'
-            })
-        ], style={'display': 'flex', 'alignItems': 'center', 'padding': '10px', 'borderBottom': '1px solid #ccc'}),
+            html.Div([], className="top-bar-extra"),
+        ], className="top-bar"),
 
-        # -------------------------- Middle Area --------------------------
-        html.Div([  
+        # Middle Area
+        html.Div([
             # MQTT Log Section
             html.Div([
                 html.Div([
-                    html.H5("MQTT Log", style={'margin': 0}),
-                    html.Button('Clear Log', id='clear-mqtt-log-btn', style={
-                        'marginLeft': '10px', 
-                        'height': '30px',
-                        'alignSelf': 'center'
-                    }),
-                ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),
+                    html.H5("MQTT Log"),
+                    html.Button('Clear Log', id='clear-mqtt-log-btn'),
+                ], className="log-header"),
 
-                html.Div([ 
+                html.Div([
                     html.Div([
                         dcc.Interval(
                             id='interval-component',
-                            interval=1 * 1000,  
+                            interval=1 * 1000,
                             n_intervals=0
                         ),
                         html.Ul(id='mqtt-log-list'),
-                    ],
-                        style={
-                            'height': '300px',
-                            'border': '1px solid black',
-                            'padding': '10px',
-                            'overflowY': 'auto',
-                            'marginTop': '15px'
-                        },
-                    )
-                ], style={'width': '100%', 'display': 'inline-block', 'padding': '10px'})
-            ], style={'width' : '48%'}), 
+                    ], className="log-content")
+                ]),
+            ], className="log-section"),
 
             # Action Log Section
             html.Div([
                 html.Div([
-                    html.H5("Action Log", style={'margin': 0}),
-                    html.Button('Clear Log', id='clear-action-log-btn', style={
-                        'marginLeft': '10px',  
-                        'height': '30px',
-                        'alignSelf': 'center'
-                    }),
-                ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),
+                    html.H5("Action Log"),
+                    html.Button('Clear Log', id='clear-action-log-btn'),
+                ], className="log-header"),
 
-                html.Ul(id='action-log', style={
-                    'height': '300px', 
-                    'border': '1px solid black', 
-                    'padding': '10px', 
-                    'overflowY': 'auto',
-                    'marginTop' : '15px'
-                })
-            ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
-        ], style={'display': 'flex', 'justifyContent': 'space-between', 'padding': '10px'}),  
+                html.Ul(id='action-log', className="log-content")
+            ], className="log-section"),
+        ], className="middle-area"),
 
-        # -------------------------- Bottom Bar --------------------------
+        # Bottom Bar
         html.Div([
             html.Div([
-                html.P(["Sensor Requestor"], style={'margin': '1px', 'borderBottom': '1px solid #ccc', 'width': '20%'})
-            ], style={'width': '100%', 'display': 'block', 'padding': '8px'}),
+                html.P("Sensor Requestor", className="sensor-requestor-header"),
+            ], className="sensor-requestor-container"),
 
             html.Div([
                 html.Button("Get IDs", id='get-ids-btn', n_clicks=0),
-                html.Div(id='ids-area', style={'display': 'flex', 'flexWrap': 'wrap', 'padding': '10px'})
-            ], style={'width': '100%', 'height': '50px', 'display': 'flex', 'textAlign': 'right', 'paddingRight': '20px', 'overflowX' : 'auto'}),
-        ], style={'borderTop': '1px solid #ccc', 'border': '1px solid #ccc', 'padding': '5px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'flex-start', 'height': '100%', 'gap': '3px'})
-    ], style={
-        'width': '70%',  
-        'maxWidth': '1200px',  
-        'margin': '0 auto', 
-        'boxSizing': 'border-box',  
-        'padding': '20px',  
-        'border': '1px solid #000000',  
-        'borderRadius': '8px',
-    })
-], style={
-    'display': 'flex',
-    'alignItems': 'center',
-    'justifyContent': 'center',
-    'height': '100vh',  
-    'padding': '20px',
-})
+                html.Div(id='ids-area', className="ids-area"),
+            ], className="bottom-bar-actions"),
+        ], className="bottom-bar")
+    ], className="main-container")
+], className="app-container")
 
 # -------------------------- Run the App --------------------------
 if __name__ == '__main__':
-    # Create a new computer instance
-    computer = OperatingComputer("0001", True, True, "all", "0001")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--id', default='0001', help='Identifies computer')
+    parser.add_argument('-t', '--trigger', action='store_true', help='Allows computer to trigger sensors')
+    parser.add_argument('-l', '--listen', action='store_true', help='Allows computer to listen to sensors')
+    parser.add_argument('-T', '--type', help='Sensor type')
+    parser.add_argument('-s', '--sensor', help='Sensor ID')
+    parser.add_argument('-a', '--all', action='store_true', help="Returns a list of available ids to trigger.")
+    args = parser.parse_args()
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format=f'%(levelname)s - [{Config.HOSTNAME}:{Config.PORT}] - (%(computer_name)s) - %(message)s'
+    )
+    logger = logging.getLogger()
+    logger.addFilter(ComputerNameFilter())
+
+    # If -a is used, display available sensor IDs but don't exit
+    if args.all:
+        computer = OperatingComputer(args.id, False, False, '', '')
+        available_ids = computer.get_sensor_ids()
+        logger.info(f"Available Sensor Ids are {available_ids}")
     
+    # Check if required arguments are passed for normal operation
+    if not args.type:
+        logger.error('Computer must specify a sensor type ( -T | --type )')
+        exit(1)
+    if not args.sensor:
+        logger.error('Computer must specify a sensor ID ( -s | --sensor )')
+        exit(1)
+    if not args.trigger and not args.listen:
+        logger.error('Computer must specify a trigger flag ( -t | --trigger ) or a listen flag ( -l | --listen )')
+        exit(1)
+
+    # Create a new computer instance
+    computer = OperatingComputer(args.id, args.trigger, args.listen, args.type, args.sensor)
+        
     try:
         computer.listen_to_sensors()
         app.run_server(debug=False, port=1883)

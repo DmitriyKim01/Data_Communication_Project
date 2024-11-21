@@ -1,0 +1,111 @@
+.Select.is-clearable.is-searchable.Select--single {
+  width: 9rem;
+}
+/* General App Container */
+.app-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 20px;
+}
+
+/* Main Content Container */
+.main-container {
+  width: 70%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid #000000;
+  border-radius: 8px;
+}
+
+/* Top Bar */
+.top-bar {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.top-bar-actions {
+  display: flex;
+  width: 30%;
+  gap: 3rem;
+}
+
+.top-bar-extra {
+  display: flex;
+  float: right;
+  text-align: right;
+  width: 80%;
+  height: 100%;
+  justify-content: center;
+  gap: 20px;
+}
+
+/* Middle Area */
+.middle-area {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.log-section {
+  width: 48%;
+  display: inline-block;
+  padding: 10px;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.log-content {
+  height: 300px;
+  border: 1px solid black;
+  padding: 10px;
+  overflow-y: auto;
+  margin-top: 15px;
+}
+
+/* Bottom Bar */
+.bottom-bar {
+  border-top: 1px solid #ccc;
+  border: 1px solid #ccc;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100%;
+  gap: 3px;
+}
+
+.sensor-requestor-container {
+  width: 100%;
+  display: block;
+  padding: 8px;
+}
+
+.sensor-requestor-header {
+  margin: 1px;
+  border-bottom: 1px solid #ccc;
+  width: 20%;
+}
+
+.bottom-bar-actions {
+  width: 100%;
+  height: 50px;
+  display: flex;
+  text-align: right;
+  padding-right: 20px;
+  overflow-x: auto;
+}
+
+.ids-area {
+  display: flex;
+  flex-wrap: wrap;
+}
