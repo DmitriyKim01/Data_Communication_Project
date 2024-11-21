@@ -41,6 +41,7 @@ class OperatingComputer:
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.connected = False
+        self.log = []
 
         # gRPC
         self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
@@ -79,12 +80,13 @@ class OperatingComputer:
         # Decode the message payload
         payload = message.payload.decode('utf-8')
         data = json.loads(payload)
+        
+        # Get the encoded image
         encoded_image = data.get('image')
         if encoded_image:
-            # Decode the encoded base64 image
-            decoded_image = base64.b64decode(encoded_image)
-            data['image'] = decoded_image
-        self.logger.info(f'Received message: {data}')
+            self.log.append(base64.b64decode(encoded_image))        
+        return self.log
+
         
     def listen_to_sensors(self):
         # Connect to MQTT broker
@@ -94,13 +96,13 @@ class OperatingComputer:
             self.logger.info('Waiting for MQTT connection...')
             time.sleep(1)
         
-        if self.Type.lower() not in [sensor_type.lower() for sensor_type in Config.SENSOR_TYPES]:
+        if self.type.lower() not in [sensor_type.lower() for sensor_type in Config.SENSOR_TYPES]:
             self.logger.error('Invalid sensor type')
             exit(1)
 
         sensor_id = self.sensor.lower()
 
-        sensor_type = self.Type.lower()
+        sensor_type = self.type.lower()
         if not self.is_valid_sensor_id(sensor_id):
             self.client.disconnect()
             return

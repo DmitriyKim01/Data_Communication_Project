@@ -19,15 +19,16 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
 # Initialize the Dash app
 app = dash.Dash(__name__)
-
+computer = OperatingComputer(id="0001", trigger=True, listen=True, type="all", sensor="0001")
+computer.listen_to_sensors()
 action_log = []
+mqtt_log = []
 # Filter for logging
 class ComputerNameFilter(logging.Filter):
     def filter(self, record):
         if not hasattr(record, 'computer_name'):
             record.computer_name = 'N/A'
         return True
-computer = OperatingComputer(id="0001", trigger=True, listen=True, type="all", sensor="0001")
 
 @app.callback(
     [Output('ids-area', 'children'),  
@@ -41,7 +42,7 @@ def get_sensor_ids_and_options(n_clicks):
     try:
         # Fetch the sensor IDs
         sensor_ids = computer.get_sensor_ids()
-        ids_area_content = [html.Div(f"Sensor ID: {sensor_id}", style={'margin': '5px'}) for sensor_id in sensor_ids]
+        ids_area_content = [html.Div(f"Sensor ID: {sensor_id}", style={'margin': '5px', 'borderRight' : '2px solid #000000', 'paddingRight': '5px'}) for sensor_id in sensor_ids]
         # Create options for the dropdown
         dropdown_options = [{'label': f'Sensor {sensor_id}', 'value': sensor_id} for sensor_id in sensor_ids]
 
@@ -76,7 +77,8 @@ def update_and_clear_logs(trigger_clicks, clear_clicks, selected_option):
 
 
 # Layout --------------------------------------------------------------------------------------------------------
-app.layout = html.Div([
+# Layout --------------------------------------------------------------------------------------------------------
+app.layout = html.Div([  # error here not closed  
     # Container for the entire content, centered on the screen
     html.Div([
         # Top Bar
@@ -114,53 +116,65 @@ app.layout = html.Div([
         ], style={'display': 'flex', 'alignItems': 'center', 'padding': '10px', 'borderBottom': '1px solid #ccc'}),
 
         # Middle Area (Two big boxes, horizontally next to each other)
-html.Div([
-    # MQTT Log Section
-    html.Div([
-        # Header for MQTT Log with button
-        html.Div([
-            html.H5("MQTT Log", style={'margin': 0}),
-            html.Button('Clear Log', id='clear-mqtt-log-btn', style={
-                'marginLeft': '10px', 
-                'height': '30px',
-                'alignSelf': 'center'
-            }),
-        ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}), 
+        html.Div([  # This was missing closing bracket
+            # MQTT Log Section
+            html.Div([
+                # Header for MQTT Log with button
+                html.Div([
+                    html.H5("MQTT Log", style={'margin': 0}),
+                    html.Button('Clear Log', id='clear-mqtt-log-btn', style={
+                        'marginLeft': '10px', 
+                        'height': '30px',
+                        'alignSelf': 'center'
+                    }),
+                ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),
 
-        # Placeholder for MQTT Log content
-        html.Div(id='mqtt-log', style={
-            'height': '300px', 
-            'border': '1px solid black', 
-            'padding': '10px', 
-            'overflowY': 'auto',
-            'marginTop' : '15px'
+                # Placeholder for MQTT Log content
+               html.Div([
+            html.Ul(id='mqtt-log-list'),  
+            dcc.Interval(
+                id='interval-component',
+                interval=1 * 1000,  
+                n_intervals=0
+            ),
+            html.Div(
+                id='mqtt-log',
+                style={
+                    'height': '300px',
+                    'border': '1px solid black',
+                    'padding': '10px',
+                    'overflowY': 'auto',
+                    'marginTop': '15px'
+                },
+                children=[
+                    html.Ul(id='mqtt-log-list')  # Will dynamically update
+                ]
+            )
+        ], style={'width': '100%', 'display': 'inline-block', 'padding': '10px'})
 
-        }, children=[
-            html.Ul(id='mqtt-log-list')
-        ])
-    ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
 
-    # Action Log Section
-    html.Div([
-        html.Div([
-            html.H5("Action Log", style={'margin': 0}),
-            html.Button('Clear Log', id='clear-action-log-btn' , style={
-                'marginLeft': '10px',  
-                'height': '30px',
-                'alignSelf': 'center'
-            }),
-        ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}), 
+            ], style={'width' : '48%'}), 
+            
+            # Action Log Section
+            html.Div([
+                html.Div([
+                    html.H5("Action Log", style={'margin': 0}),
+                    html.Button('Clear Log', id='clear-action-log-btn', style={
+                        'marginLeft': '10px',  
+                        'height': '30px',
+                        'alignSelf': 'center'
+                    }),
+                ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),
 
-        html.Ul(id='action-log', style={
-            'height': '300px', 
-            'border': '1px solid black', 
-            'padding': '10px', 
-            'overflowY': 'auto',
-            'marginTop' : '15px'
-        })
-    ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
-], style={'display': 'flex', 'justifyContent': 'space-between', 'padding': '10px'}),
-
+                html.Ul(id='action-log', style={
+                    'height': '300px', 
+                    'border': '1px solid black', 
+                    'padding': '10px', 
+                    'overflowY': 'auto',
+                    'marginTop' : '15px'
+                })
+            ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
+        ], style={'display': 'flex', 'justifyContent': 'space-between', 'padding': '10px'}),  # Middle area closing
 
         # Bottom Bar
         html.Div([
@@ -173,7 +187,7 @@ html.Div([
             html.Div([
                 html.Button("Get IDs", id='get-ids-btn', n_clicks=0),
                 html.Div(id='ids-area', style={'display': 'flex', 'flexWrap': 'wrap', 'padding': '10px'})
-            ], style={'width': '100%', 'height': '50px', 'display': 'flex', 'textAlign': 'right', 'paddingRight': '20px'}),
+            ], style={'width': '100%', 'height': '50px', 'display': 'flex', 'textAlign': 'right', 'paddingRight': '20px', 'overflowX' : 'auto'}),
         ], style={'borderTop': '1px solid #ccc', 'border': '1px solid #ccc', 'padding': '5px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'flex-start', 'height': '100%', 'gap': '3px'})
     ], style={
         'width': '70%',  
