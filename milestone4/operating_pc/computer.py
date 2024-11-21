@@ -80,13 +80,11 @@ class OperatingComputer:
         payload = message.payload.decode('utf-8')
         data = json.loads(payload)
         
-        with self.log_lock:  
-            self.log.append(message)
         
         encoded_image = data.get('image')
         if encoded_image:
             with self.log_lock:
-                self.log.append(base64.b64decode(encoded_image))
+                self.log.append("test")
 
     def get_log(self):
         with self.log_lock:

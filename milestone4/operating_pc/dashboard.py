@@ -89,6 +89,7 @@ def update_and_clear_logs(trigger_clicks, clear_clicks, selected_option):
 )
 def update_mqtt_log(n):
     new_log_data = computer.get_log()  
+    print(new_log_data)
     return [html.Li(log) for log in new_log_data]
 
 # -------------------------- Layout --------------------------
@@ -143,24 +144,24 @@ app.layout = html.Div([
                 ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),
 
                 html.Div([ 
-                    html.Ul(id='mqtt-log-list'),  
-                    dcc.Interval(
-                        id='interval-component',
-                        interval=1 * 1000,  
-                        n_intervals=0
-                    ),
-                    html.Div(
-                        id='mqtt-log',
-                        style={
-                            'height': '300px',
-                            'border': '1px solid black',
-                            'padding': '10px',
-                            'overflowY': 'auto',
-                            'marginTop': '15px'
-                        },
-                        children=[html.Ul(id='mqtt-log-list')]
-                    )
-                ], style={'width': '100%', 'display': 'inline-block', 'padding': '10px'})
+    html.Div([
+        dcc.Interval(
+            id='interval-component',
+            interval=1 * 1000,  
+            n_intervals=0
+        ),
+        html.Ul(id='mqtt-log-list'),
+    ], id='mqtt-log',
+        style={
+            'height': '300px',
+            'border': '1px solid black',
+            'padding': '10px',
+            'overflowY': 'auto',
+            'marginTop': '15px'
+        },
+    )
+], style={'width': '100%', 'display': 'inline-block', 'padding': '10px'})
+
             ], style={'width' : '48%'}), 
 
             # Action Log Section
@@ -217,11 +218,10 @@ if __name__ == '__main__':
    
 
     # Create a new computer instance
-    computer = OperatingComputer("0001", True, True, "all", "alll")
+    computer = OperatingComputer("0001", True, True, "all", "0001")
     
     try:
         computer.listen_to_sensors()
-        app.run_server(debug=False)
-
+        app.run_server(debug=False, port =1883)
     except KeyboardInterrupt:
         computer.disconnect()
