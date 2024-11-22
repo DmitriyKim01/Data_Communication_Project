@@ -154,11 +154,14 @@ def update_mqtt_log(n_intervals, clear_clicks):
 app.layout = html.Div([
     # Container for the entire content
     html.Div([
-        # Top Bar
+       #Header Bar
         html.Div([
             html.Div("GRPC", className="header-item"),
+                html.Div([], className="vertical-divider"),
+
             html.Div("MQTT", className="header-item"),
         ], className="header-bar"),
+    # Top Bar
 html.Div([
     # Left Section
     html.Div([
