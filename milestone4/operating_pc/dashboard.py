@@ -110,42 +110,46 @@ app.layout = html.Div([
     # Container for the entire content
     html.Div([
         # Top Bar
-        html.Div([
-            html.Div([
-                dcc.Dropdown(
-                    id='select-dropdown',
-                    options=[],
-                    placeholder="Select a sensor",
-                ),
-                html.Button('Trigger', id='trigger-btn', n_clicks=0),
-                html.Button('Enable', id='enable-btn'),
-                html.Button('Disable', id='disable-btn'),
-            ], className="top-bar-actions"),
+html.Div([
+    # Left Section
+    html.Div([
+        dcc.Dropdown(
+            id='select-dropdown',
+            options=[],
+            placeholder="Select a sensor",
+        ),
+        html.Button('Trigger', id='trigger-btn', n_clicks=0),
+        html.Button('Enable', id='enable-btn'),
+        html.Button('Disable', id='disable-btn'),
+    ], className="top-bar-actions"),
 
-            html.Div([
-    dcc.Dropdown(
-        id='sensor-id-dropdown',
-        options=[{'label': 'Any', 'value': 'Any'}],
-        placeholder="Select Sensor ID",
-        className="dropdown"
-    ),
-    dcc.Dropdown(
-        id='type-dropdown',
-        options=[
-            {'label': 'Humidity', 'value': 'Humidity'},
-            {'label': 'Temperature', 'value': 'Temperature'},
-            {'label': 'Wind', 'value': 'Wind'},
-            {'label': 'Any', 'value': 'Any'},
-            {'label': 'All', 'value': 'All'},
-            {'label': 'Images', 'value': 'Images'}
-        ],
-        placeholder="Select Type",
-        className="dropdown"
-    ),
-    html.Button('Subscribe', id='subscribe-btn', className="subscribe-button")
-], id="top-bar-extra"),
+    # Divider
+    html.Div([], className="vertical-divider"),
 
-        ], className="top-bar"),
+    # Right Section
+    html.Div([
+        dcc.Dropdown(
+            id='sensor-id-dropdown',
+            options=[{'label': 'Any', 'value': 'Any'}],
+            placeholder="Select Sensor ID",
+            className="dropdown"
+        ),
+        dcc.Dropdown(
+            id='type-dropdown',
+            options=[
+                {'label': 'Humidity', 'value': 'Humidity'},
+                {'label': 'Temperature', 'value': 'Temperature'},
+                {'label': 'Wind', 'value': 'Wind'},
+                {'label': 'Any', 'value': 'Any'},
+                {'label': 'All', 'value': 'All'},
+                {'label': 'Images', 'value': 'Images'}
+            ],
+            placeholder="Select Type",
+            className="dropdown"
+        ),
+        html.Button('Subscribe', id='subscribe-btn', className="subscribe-button")
+    ], id="top-bar-extra")
+], className="top-bar"),
 
         # Middle Area
         html.Div([

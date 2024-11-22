@@ -27,12 +27,73 @@
   align-items: center;
   padding: 10px;
   border-bottom: 1px solid #ccc;
-  justify-content: space-around;
+  justify-content: space-evenly;
 }
 
 .top-bar-actions {
   display: flex;
   gap: 1rem;
+}
+
+/* Trigger Button */
+#trigger-btn {
+  background-color: #afa5a500;
+  color: #030303;
+  width: 6rem;
+  height: 2.9em;
+  border: #b48b10 0.2em solid;
+  border-radius: 11px;
+  transition: all 0.6s ease;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+#trigger-btn:hover {
+  background-color: #b48b10;
+  cursor: pointer;
+}
+/* Enable Button */
+#enable-btn {
+  background-color: #e0f7fa00;
+  color: #00695c;
+  width: 6rem;
+  height: 2.9em;
+  border: #00695c 0.2em solid;
+  border-radius: 11px;
+  transition: all 0.6s ease;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+#enable-btn:hover {
+  background-color: #00695c;
+  color: white;
+  cursor: pointer;
+}
+
+/* Disable Button */
+#disable-btn {
+  background-color: #ffebee00;
+  color: #b71c1c;
+  width: 6rem;
+  height: 2.9em;
+  border: #b71c1c 0.2em solid;
+  border-radius: 11px;
+  transition: all 0.6s ease;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+#disable-btn:hover {
+  background-color: #b71c1c;
+  color: white;
+  cursor: pointer;
+}
+
+
+
+.text {
+  margin: 0 1.5em
 }
 
 /* Top Bar Extra Section */
@@ -42,27 +103,39 @@
   gap: 1rem;
   
 }
+/* Divider between sections */
+
+.vertical-divider {
+  width: 3px;
+  height: 40px; 
+  background-color: #000000; 
+  margin: 0 10px;
+}
 
 /* Dropdown Styling */
 .dropdown {
   width: 150px;
 }
 
-/* Subscribe Button Styling */
+/* Subscribe Button */
 .subscribe-button {
-  height: 40px;
-  border-radius: 10px;
-  padding: 0 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
+  background-color: #96c1ee00; 
+  color: #0056b3; 
+  width: 6rem;
+  height: 2.9em;
+  border: #0056b3 0.2em solid;
+  border-radius: 11px;
+  transition: all 0.6s ease;
+  font-size: 13px;
+  font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
 .subscribe-button:hover {
-  background-color: #0056b3;
+  background-color: #0056b3; 
+  color: white; 
 }
+
 
 /* Middle Area */
 .middle-area {
