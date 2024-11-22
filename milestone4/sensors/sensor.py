@@ -248,6 +248,7 @@ class Sensor(grpc_sensor.SingleSensor):
   # Return random byte array as an image
   def capture_event(self):
     with self.lock:
+      # Simulate image capture
       with open(os.path.abspath(os.path.join(os.path.dirname(__file__), './f1.jpg')), "rb") as image_file:
         image = Image.open(image_file)
         byte_array = io.BytesIO()
