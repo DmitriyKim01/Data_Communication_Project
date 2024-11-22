@@ -1,6 +1,10 @@
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from abc import ABC, abstractmethod
-from sensors.event import Event
+from event import Event
 from config import Config
 from threading import Lock, Thread
 import os
@@ -15,7 +19,6 @@ import grpc
 from concurrent import futures
 from proto import sensor_pb2
 from proto import sensor_pb2_grpc as grpc_sensor
-import os 
 from PIL import Image
 import io
 
@@ -243,10 +246,13 @@ class Sensor(grpc_sensor.SingleSensor):
   # CAMERA METHODS -----------------------------
   
   # Return random byte array as an image
-  # TODO: Implement the camera capture
   def capture_event(self):
     with self.lock:
-      return b''
+      with open(os.path.abspath(os.path.join(os.path.dirname(__file__), './f1.jpg')), "rb") as image_file:
+        image = Image.open(image_file)
+        byte_array = io.BytesIO()
+        image.save(byte_array, format=image.format)
+        return byte_array.getvalue()
   
 
 

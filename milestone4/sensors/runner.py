@@ -1,5 +1,5 @@
 
-from sensors.sensor import Sensor
+from sensor import Sensor
 import time
 import logging
 from config import Config

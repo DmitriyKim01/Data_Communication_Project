@@ -1,6 +1,9 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import grpc as grpc
 from concurrent import futures
-import proto.sensor_pb2 as sensor_pb2
 from proto import sensor_pb2
 from proto import sensor_pb2_grpc as grpc_sensor
     
