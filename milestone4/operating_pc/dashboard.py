@@ -56,51 +56,58 @@ def get_sensor_ids_and_options(n_clicks):
         error_message = [html.Div("Failed to fetch sensor IDs.", style={'color': 'red'})]
         return error_message, []  
 
-# Callback to update and clear logs
 @app.callback(
     Output('action-log', 'children'),  
     [Input('trigger-btn', 'n_clicks'),  
-     Input('clear-action-log-btn', 'n_clicks'), 
-     Input('select-dropdown', 'value')  
-])
-def update_and_clear_logs(trigger_clicks, clear_clicks, selected_option):
+     Input('clear-action-log-btn', 'n_clicks'),
+     Input('subscribe-btn', 'n_clicks')],  
+    [State('select-dropdown', 'value'),  
+     State('type-dropdown', 'value'),  
+     State('sensor-id-dropdown', 'value')]  
+)
+def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, selected_option, sensor_type, sensor_id):
+    global action_log  # Ensure we use the global action log list
     trigger_clicks = trigger_clicks or 0
     clear_clicks = clear_clicks or 0
-    # Clear the log if the clear button was clicked
-    if ctx.triggered_id == 'clear-action-log-btn':
-        action_log.clear()  
-        msg = "Action log cleared."
-    elif ctx.triggered_id == 'trigger-btn':
+    subscribe_clicks = subscribe_clicks or 0
+
+    # Determine the triggering input
+    triggered_id = ctx.triggered_id
+
+    if triggered_id == 'clear-action-log-btn':
+        # Clear the action log
+        action_log.clear()
+        action_log.append(html.Li("Action log cleared.", style={'color': 'blue'}))
+
+    elif triggered_id == 'trigger-btn':
+        # Handle trigger button logic
         if selected_option:
             new_log = html.Li(f"Trigger button clicked at {time.ctime()}, selected option: {selected_option}")
         else:
             new_log = html.Li(f"Trigger button clicked at {time.ctime()}, no option selected")
-        action_log.append(new_log) 
-      
-        msg = "New log added."
+        action_log.append(new_log)
 
-    return action_log  
+    elif triggered_id == 'subscribe-btn':
+        if sensor_id == "Any":
+            sensor_id = "+"
+        # Handle subscription logic
+        if not sensor_type or not sensor_id:
+            action_log.append(html.Li("Please select both sensor type and sensor ID.", style={'color': 'red'}))
+        else:
+            try:
+                success = computer.listen_to_sensors(sensor_type, sensor_id)
+                if success:
+                    action_log.append(html.Li(f"Successfully subscribed to /sensor/{sensor_type}/{sensor_id}"))
+                else:
+                    action_log.append(html.Li(f"Failed to subscribe to /sensor/{sensor_type}/{sensor_id}", style={'color': 'red'}))
+            except Exception as e:
+                logging.error(f"Subscription failed: {str(e)}")
+                action_log.append(html.Li(f"Error during subscription: {str(e)}", style={'color': 'red'}))
 
-@app.callback(
-    Output('mqtt-log-list', 'children'),
-    [Input('interval-component', 'n_intervals'),
-     Input('clear-mqtt-log-btn', 'n_clicks')] 
-)
-def update_mqtt_log(n, clear_clicks):
-
-    # Clear MQTT log if the clear button was clicked
-    if ctx.triggered_id == 'clear-mqtt-log-btn':
-        mqtt_log = []
-        computer.clear_log()
-        
-    # Fetch the new log data
-    mqtt_log = computer.get_log()
+    # Return the updated action log
+    return action_log
 
 
-    if mqtt_log:
-        return [html.Li(log) for log in mqtt_log]
-    else:
-        return []  
 
 
 
@@ -204,7 +211,6 @@ if __name__ == '__main__':
     computer = OperatingComputer("0001", True, False, "all", "0001")
         
     try:
-        computer.listen_to_sensors()
         app.run_server(debug=False, port=1883)
     except KeyboardInterrupt:
         computer.disconnect()
