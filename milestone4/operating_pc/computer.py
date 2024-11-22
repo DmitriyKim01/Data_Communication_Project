@@ -46,7 +46,8 @@ class OperatingComputer:
         # gRPC
         self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
         self.stub = sensor_pb2_grpc.SensorServerStub(self.channel)
-        
+        self.subscribed_topics = set()
+
     def disconnect(self):
         self.client.loop_stop()
         self.client.disconnect()
@@ -82,41 +83,47 @@ class OperatingComputer:
         
     def listen_to_sensors(self, sensor_type, sensor_id):
         try:
-            # Connect to MQTT broker
-            self.client.connect(Config.HOSTNAME, Config.PORT)
-            self.client.loop_start()
+            # Ensure client is connected
+            if not self.connected:
+                self.client.connect(Config.HOSTNAME, Config.PORT)
+                self.client.loop_start()
 
-            # Wait for connection with timeout
-            start_time = time.time()
-            while not self.connected:
-                if time.time() - start_time > Config.CONNECTION_TIMEOUT:
-                    self.logger.error("MQTT connection timed out.")
-                    self.client.loop_stop()
-                    return False
-                time.sleep(0.1)
+                # Wait for connection with timeout
+                start_time = time.time()
+                while not self.connected:
+                    if time.time() - start_time > Config.CONNECTION_TIMEOUT:
+                        self.logger.error("MQTT connection timed out.")
+                        self.client.loop_stop()
+                        return False
+                    time.sleep(0.1)
 
             # Validate sensor type
             valid_types = [st.lower() for st in Config.SENSOR_TYPES]
             if sensor_type.lower() not in valid_types:
                 self.logger.error(f"Invalid sensor type: {sensor_type}")
-                self.client.loop_stop()
                 return False
 
             # Validate sensor ID
             if not self.is_valid_sensor_id(sensor_id):
-                self.logger.error(f"Invalid sensor ID: {sensor_id}")
-                self.client.loop_stop()
                 return False
 
-            # Subscribe to the topic
-            topic = f"/sensor/{sensor_type}/{sensor_id}"
-            self.client.subscribe(topic)
-            self.logger.info(f"Successfully subscribed to topic: {topic}")
+            # Convert to lowercase and construct the topic
+            topic = f"/sensor/{sensor_type.lower()}/{sensor_id.lower()}"
+
+            # Append to subscribed topics if not already subscribed
+            if not hasattr(self, 'subscribed_topics'):
+                self.subscribed_topics = set() 
+
+            if topic not in self.subscribed_topics:
+                self.client.subscribe(topic)
+                self.subscribed_topics.add(topic)
+                self.logger.info(f"Successfully subscribed to topic: {topic}")
+            else:
+                self.logger.info(f"Already subscribed to topic: {topic}")
 
             return True
         except Exception as e:
             self.logger.error(f"Error in listen_to_sensors: {e}")
-            self.client.loop_stop()
             return False
 
 

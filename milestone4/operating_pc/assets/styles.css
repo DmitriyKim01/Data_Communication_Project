@@ -219,7 +219,13 @@ scale: 1;
   margin-top: 15px;
   border-radius: 2rem;
 }
+#action-log {
+  list-style-type: none;
+}
+#action-log li::before{
+  content: "- ";
 
+}
 /* Bottom Bar */
 .bottom-bar {
   border-top: 1px solid #ccc;

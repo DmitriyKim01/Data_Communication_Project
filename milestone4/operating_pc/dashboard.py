@@ -95,11 +95,11 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, selected_o
             action_log.append(html.Li("Please select both sensor type and sensor ID.", style={'color': 'red'}))
         else:
             try:
-                success = computer.listen_to_sensors(sensor_type, sensor_id)
+                success = computer.listen_to_sensors(sensor_type.lower(), sensor_id.lower())
                 if success:
-                    action_log.append(html.Li(f"Successfully subscribed to /sensor/{sensor_type}/{sensor_id}", style={'color': 'green'}))
+                    action_log.append(html.Li(f"Successfully subscribed to /sensor/{sensor_type.lower()}/{sensor_id.lower()}", style={'color': 'green'}))
                 else:
-                    action_log.append(html.Li(f"Failed to subscribe to /sensor/{sensor_type}/{sensor_id}", style={'color': 'red'}))
+                    action_log.append(html.Li(f"Failed to subscribe to /sensor/{sensor_type.lower()}/{sensor_id.lower()}", style={'color': 'red'}))
             except Exception as e:
                 logging.error(f"Subscription failed: {str(e)}")
                 action_log.append(html.Li(f"Error during subscription: {str(e)}", style={'color': 'red'}))
