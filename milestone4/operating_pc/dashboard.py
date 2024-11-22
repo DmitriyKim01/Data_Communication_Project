@@ -87,16 +87,14 @@ def update_and_clear_logs(trigger_clicks, clear_clicks, selected_option):
      Input('clear-mqtt-log-btn', 'n_clicks')] 
 )
 def update_mqtt_log(n, clear_clicks):
+
     # Clear MQTT log if the clear button was clicked
     if ctx.triggered_id == 'clear-mqtt-log-btn':
-        mqtt_log.clear()
-
+        mqtt_log = []
+        computer.clear_log()
+        
     # Fetch the new log data
-    new_log_data = computer.get_log()
-
-    # If new log data is not empty or None, append it to the mqtt_log
-    if new_log_data:
-        mqtt_log.append(new_log_data)
+    mqtt_log = computer.get_log()
 
 
     if mqtt_log:
