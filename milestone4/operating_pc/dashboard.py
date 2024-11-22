@@ -97,7 +97,7 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, selected_o
             try:
                 success = computer.listen_to_sensors(sensor_type, sensor_id)
                 if success:
-                    action_log.append(html.Li(f"Successfully subscribed to /sensor/{sensor_type}/{sensor_id}"))
+                    action_log.append(html.Li(f"Successfully subscribed to /sensor/{sensor_type}/{sensor_id}", style={'color': 'green'}))
                 else:
                     action_log.append(html.Li(f"Failed to subscribe to /sensor/{sensor_type}/{sensor_id}", style={'color': 'red'}))
             except Exception as e:
@@ -108,6 +108,33 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, selected_o
     return action_log
 
 
+@app.callback(
+    Output('mqtt-log-list', 'children'),
+    [Input('interval-component', 'n_intervals'),
+     Input('clear-mqtt-log-btn', 'n_clicks')]
+)
+def update_mqtt_log(n_intervals, clear_clicks):
+    global mqtt_log
+
+    # Determine what triggered the callback
+    if ctx.triggered_id == 'clear-mqtt-log-btn':
+        # Clear MQTT log
+        mqtt_log.clear()
+        computer.clear_log()
+        return []  
+
+    # Fetch the new log data
+    new_log = computer.get_log()
+
+    # Check for differences in the log and update if needed
+    if new_log != mqtt_log:
+        mqtt_log = new_log
+
+    # Return the updated log list
+    if mqtt_log:
+        return [html.Li(log_entry) for log_entry in mqtt_log]
+    else:
+        return []  
 
 
 

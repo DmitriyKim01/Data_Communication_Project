@@ -63,8 +63,6 @@ class OperatingComputer:
     def on_message(self, client, userdata, message):
         payload = message.payload.decode('utf-8')
         data = json.loads(payload)
-        
-        
         encoded_image = data.get('image')
         if encoded_image:
             with self.log_lock:
@@ -82,30 +80,45 @@ class OperatingComputer:
                 self.log.clear()
 
         
-    def listen_to_sensors(self):   
-        # Connect to MQTT broker
-        self.client.connect(Config.HOSTNAME, Config.PORT)
-        self.connected = True
+    def listen_to_sensors(self, sensor_type, sensor_id):
+        try:
+            # Connect to MQTT broker
+            self.client.connect(Config.HOSTNAME, Config.PORT)
+            self.client.loop_start()
 
-        self.client.loop_start()
-        while not self.connected:
-            self.logger.info('Waiting for MQTT connection...')
-            time.sleep(1)
-        
-        if self.type.lower() not in [sensor_type.lower() for sensor_type in Config.SENSOR_TYPES]:
-            self.logger.error('Invalid sensor type')
-            exit(1)
+            # Wait for connection with timeout
+            start_time = time.time()
+            while not self.connected:
+                if time.time() - start_time > Config.CONNECTION_TIMEOUT:
+                    self.logger.error("MQTT connection timed out.")
+                    self.client.loop_stop()
+                    return False
+                time.sleep(0.1)
 
-        sensor_id = self.sensor.lower()
+            # Validate sensor type
+            valid_types = [st.lower() for st in Config.SENSOR_TYPES]
+            if sensor_type.lower() not in valid_types:
+                self.logger.error(f"Invalid sensor type: {sensor_type}")
+                self.client.loop_stop()
+                return False
 
-        sensor_type = self.type.lower()
-        if not self.is_valid_sensor_id(sensor_id):
-            self.client.disconnect()
-            return
-        
-        self.client.subscribe('/sensor/+/0001')
-        self.logger.info(f'Subscribed to topic: /sensor/+/0001')
-        
+            # Validate sensor ID
+            if not self.is_valid_sensor_id(sensor_id):
+                self.logger.error(f"Invalid sensor ID: {sensor_id}")
+                self.client.loop_stop()
+                return False
+
+            # Subscribe to the topic
+            topic = f"/sensor/{sensor_type}/{sensor_id}"
+            self.client.subscribe(topic)
+            self.logger.info(f"Successfully subscribed to topic: {topic}")
+
+            return True
+        except Exception as e:
+            self.logger.error(f"Error in listen_to_sensors: {e}")
+            self.client.loop_stop()
+            return False
+
 
     # GRPC ----------------------------------------------------------------
     
@@ -144,6 +157,8 @@ class OperatingComputer:
 
     def is_valid_sensor_id(self, sensor_id):
         '''Helper method to check if the sensor ID is valid.'''
+        if sensor_id == "+":
+            return True
         valid_sensor_ids = self.get_sensor_ids()
         if sensor_id not in valid_sensor_ids:
             self.logger.error(f'Invalid sensor ID: {sensor_id}. Valid IDs are: {", ".join(valid_sensor_ids)}')
