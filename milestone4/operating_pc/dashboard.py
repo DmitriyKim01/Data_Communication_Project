@@ -36,7 +36,8 @@ mqtt_log = []
 # Callback to get sensor IDs and dropdown options
 @app.callback(
     [Output('ids-area', 'children'),  
-     Output('select-dropdown', 'options')], 
+     Output('select-dropdown', 'options'),
+     Output('sensor-id-dropdown', 'options')], 
     Input('get-ids-btn', 'n_clicks')  
 )
 def get_sensor_ids_and_options(n_clicks):
@@ -46,15 +47,21 @@ def get_sensor_ids_and_options(n_clicks):
     try:
         # Fetch the sensor IDs
         sensor_ids = computer.get_sensor_ids()
-        ids_area_content = [html.Div(f"Sensor ID: {sensor_id}", style={'margin': '5px', 'borderRight' : '2px solid #000000', 'paddingRight': '5px'}) for sensor_id in sensor_ids]
-        # Create options for the dropdown
+        ids_area_content = [
+            html.Div(f"Sensor ID: {sensor_id}", 
+                     style={'margin': '5px', 'borderRight': '2px solid #000000', 'paddingRight': '5px'})
+            for sensor_id in sensor_ids
+        ]
+        
+        # Create options for the select-dropdown and sensor-id-dropdown
         dropdown_options = [{'label': f'Sensor {sensor_id}', 'value': sensor_id} for sensor_id in sensor_ids]
+        sensor_id_options = [{'label': 'Any', 'value': 'Any'}] + dropdown_options  # Include "Any" option
 
-        return ids_area_content, dropdown_options
+        return ids_area_content, dropdown_options, sensor_id_options
     except Exception as e:
         logging.error(f"Failed to fetch sensor IDs: {str(e)}")
         error_message = [html.Div("Failed to fetch sensor IDs.", style={'color': 'red'})]
-        return error_message, []  
+        return error_message, [], []
 
 @app.callback(
     Output('action-log', 'children'),  
@@ -82,9 +89,15 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, selected_o
     elif triggered_id == 'trigger-btn':
         # Handle trigger button logic
         if selected_option:
-            new_log = html.Li(f"Trigger button clicked at {time.ctime()}, selected option: {selected_option}")
+            new_log = html.Li(
+                f"Trigger button clicked at {time.ctime()}, selected option: {selected_option}",
+                style={"color": "orange"}
+            )
         else:
-            new_log = html.Li(f"Trigger button clicked at {time.ctime()}, no option selected")
+            new_log = html.Li(
+                "no option selected",
+                style={"color": "red"}
+            )
         action_log.append(new_log)
 
     elif triggered_id == 'subscribe-btn':
@@ -142,6 +155,10 @@ app.layout = html.Div([
     # Container for the entire content
     html.Div([
         # Top Bar
+        html.Div([
+            html.Div("GRPC", className="header-item"),
+            html.Div("MQTT", className="header-item"),
+        ], className="header-bar"),
 html.Div([
     # Left Section
     html.Div([
