@@ -9,3 +9,6 @@ data
 build/
 dist/
 *.egg-info/
+*.pub
+*.pem
+id_rsa
