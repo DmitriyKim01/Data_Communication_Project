@@ -191,6 +191,7 @@ html.Div([
 
             html.Div([
                 html.Button("Get IDs", id='get-ids-btn', n_clicks=0),
+                html.Div([], className="vertical-divider"),
                 html.Div(id='ids-area', className="ids-area"),
             ], className="bottom-bar-actions"),
         ], className="bottom-bar")
@@ -199,42 +200,10 @@ html.Div([
 
 # -------------------------- Run the App --------------------------
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--id', default='0001', help='Identifies computer')
-    parser.add_argument('-t', '--trigger', action='store_true', help='Allows computer to trigger sensors')
-    parser.add_argument('-l', '--listen', action='store_true', help='Allows computer to listen to sensors')
-    parser.add_argument('-T', '--type', help='Sensor type')
-    parser.add_argument('-s', '--sensor', help='Sensor ID')
-    parser.add_argument('-a', '--all', action='store_true', help="Returns a list of available ids to trigger.")
-    args = parser.parse_args()
-
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format=f'%(levelname)s - [{Config.HOSTNAME}:{Config.PORT}] - (%(computer_name)s) - %(message)s'
-    )
-    logger = logging.getLogger()
-    logger.addFilter(ComputerNameFilter())
-
-    # If -a is used, display available sensor IDs but don't exit
-    if args.all:
-        computer = OperatingComputer(args.id, False, False, '', '')
-        available_ids = computer.get_sensor_ids()
-        logger.info(f"Available Sensor Ids are {available_ids}")
-    
-    # Check if required arguments are passed for normal operation
-    if not args.type:
-        logger.error('Computer must specify a sensor type ( -T | --type )')
-        exit(1)
-    if not args.sensor:
-        logger.error('Computer must specify a sensor ID ( -s | --sensor )')
-        exit(1)
-    if not args.trigger and not args.listen:
-        logger.error('Computer must specify a trigger flag ( -t | --trigger ) or a listen flag ( -l | --listen )')
-        exit(1)
+   
 
     # Create a new computer instance
-    computer = OperatingComputer(args.id, args.trigger, args.listen, args.type, args.sensor)
+    computer = OperatingComputer("0001", True, False, "all", "0001")
         
     try:
         computer.listen_to_sensors()
