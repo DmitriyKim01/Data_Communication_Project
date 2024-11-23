@@ -19,7 +19,7 @@ if __name__ == "__main__":
   logger = logging.getLogger()
   logger.addFilter(SensorNameFilter())
       
-  sensor = Sensor('0001', 3001)
+  sensor = Sensor('0001', 60123)
   
   sensors = [sensor]
   

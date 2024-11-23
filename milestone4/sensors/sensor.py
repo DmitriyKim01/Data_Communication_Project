@@ -21,6 +21,10 @@ from proto import sensor_pb2
 from proto import sensor_pb2_grpc as grpc_sensor
 from PIL import Image
 import io
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import serialization
 
 class Sensor(grpc_sensor.SingleSensor):
   def __init__(self, id: str, port: int):
@@ -33,6 +37,8 @@ class Sensor(grpc_sensor.SingleSensor):
     self.threads = []
     self.ip = "localhost"
     
+    # Security
+    self.computer_to_public_key = {}
     # Logger
     self.logger = logging.getLogger(self.name)
     self.logger = logging.LoggerAdapter(self.logger, {'sensor_name': f'Sensor {self.id}'})
@@ -55,9 +61,9 @@ class Sensor(grpc_sensor.SingleSensor):
     self.client.loop_start()
     
     # Simulate motion detection
-    motion_simulation_thread = Thread(target=self.simulate_motion)
-    self.threads.append(motion_simulation_thread)
-    motion_simulation_thread.start()
+    # motion_simulation_thread = Thread(target=self.simulate_motion)
+    # self.threads.append(motion_simulation_thread)
+    # motion_simulation_thread.start()
 
     # Start the GRPC server
     self.send_address_to_server()
@@ -143,7 +149,7 @@ class Sensor(grpc_sensor.SingleSensor):
       'temperature': temperature
     }
     data = json.dumps(data)
-    topic = f'/sensor/temp/{self.id}'
+    topic = f'/sensor/temperature/{self.id}'
     result = self.client.publish(topic = topic, payload = data)
     status = result[0]
     if status == 0:
@@ -228,20 +234,53 @@ class Sensor(grpc_sensor.SingleSensor):
     except grpc.RpcError as e:
       self.logger.error(f'Error triggering sensor {e.details()}')
   
+  def SendPublicKeyToSensor(self, request, context):
+    if request.sensor_id != self.id:
+      context.set_code(grpc.StatusCode.NOT_FOUND)
+      return sensor_pb2.PublicKeyResponse() 
+    # Ensure the sensor exists
+    try:
+      self.computer_to_public_key[request.id] = request.public_key
+      self.logger.info(f"Received public key from server")
+      return sensor_pb2.PublicKeyResponse(message="Public key received successfully")
+    except Exception as e:
+      context.set_details(f"Error sending public key: {e}")
+      context.set_code(grpc.StatusCode.INTERNAL)
+      return sensor_pb2.PublicKeyResponse()
+    
   # Triggered when the GRPC server receives a request to capture an image
   def TriggerCapture(self, request, context):
-    sensor_id = request.id
+    sensor_id = request.sensor_id
+    # Check if computer has sent his public key
+    if self.computer_to_public_key.get(request.id) is None:
+      context.set_code(grpc.StatusCode.UNAUTHENTICATED)
+      return sensor_pb2.CaptureResponse(image_data=b'Unauthorized')
+    
     # Ensure the sensor exists
     if sensor_id != self.id:
       context.set_code(grpc.StatusCode.NOT_FOUND)
-      return sensor_pb2.CaptureResponse() 
+      return sensor_pb2.CaptureResponse(image_data=b'invalid Sensor') 
     try:
         image_data = self.capture_event()  
-        return sensor_pb2.CaptureResponse(image_data=image_data)
+        self.logger.info(f"{type(image_data)}")
+        public_key_pem = self.computer_to_public_key[sensor_id]
+        public_key = serialization.load_pem_public_key(public_key_pem)
+        encrypted_image_data = public_key.encrypt(
+            b'test fdsfdsfsdfs fds fsdf sdf sdf sdf sdf dsf sd',
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+          )
+        )
+        print(encrypted_image_data)
+        self.logger.info(f"Encrypted image type {type(encrypted_image_data)}")
+        return sensor_pb2.CaptureResponse(image_data=encrypted_image_data)
     except Exception as e:
+        self.logger.error(f"Error capturing image: {e}")
         context.set_details(f"Error capturing image: {e}")
         context.set_code(grpc.StatusCode.INTERNAL)
-        return sensor_pb2.CaptureResponse()
+        return sensor_pb2.CaptureResponse(image_data=b'Errorrrrr')
   
   # CAMERA METHODS -----------------------------
   
@@ -253,6 +292,7 @@ class Sensor(grpc_sensor.SingleSensor):
         image = Image.open(image_file)
         byte_array = io.BytesIO()
         image.save(byte_array, format=image.format)
+        # Type: bytes
         return byte_array.getvalue()
   
 
