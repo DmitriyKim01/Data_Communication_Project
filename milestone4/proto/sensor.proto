@@ -1,17 +1,30 @@
 syntax = "proto3";
-
+// Computer to Server
 service SensorServer {
   rpc TriggerCapturePc (TriggerRequest) returns (CaptureResponse);
   rpc AddSensor (SensorInfo) returns (EmptyResponse);
   rpc GetSensorIds (EmptyRequest) returns (AvailableSensors);
+  rpc SendPublicKeyToServer (PublicKeyRequest) returns (PublicKeyResponse);
 }
-
+// Server to Sensor
 service SingleSensor {
     rpc TriggerCapture (TriggerRequest) returns (CaptureResponse);
+    rpc SendPublicKeyToSensor (PublicKeyRequest) returns (PublicKeyResponse);
+}
+
+message PublicKeyRequest {
+  string id = 1;
+  bytes public_key = 2;
+  string sensor_id = 3;
+}
+
+message PublicKeyResponse {
+  string message = 1;
 }
 
 message TriggerRequest {
     string id = 1;
+    string sensor_id = 2;
 }
 
 message CaptureResponse {
