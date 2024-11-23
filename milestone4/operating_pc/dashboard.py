@@ -1,4 +1,9 @@
 # -------------------------- Imports --------------------------
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import dash
 from dash import dcc, html, Input, Output, callback, State, ctx
 import logging
@@ -256,8 +261,9 @@ if __name__ == '__main__':
 
     # Create a new computer instance
     computer = OperatingComputer("0001", True, False, "all", "0001")
-        
+    computer.send_public_key_to_server()
+    computer.trigger_capture()
     try:
-        app.run_server(debug=False, port=1883)
+        app.run_server(debug=False, port=50129)
     except KeyboardInterrupt:
         computer.disconnect()

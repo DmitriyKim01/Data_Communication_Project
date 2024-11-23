@@ -15,6 +15,11 @@ import time
 import json
 import base64
 import threading
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import serialization
+
 class OperatingComputer:
     def __init__(self, id, trigger, listen, type, sensor):
         # Params
@@ -36,6 +41,9 @@ class OperatingComputer:
         self.type = type
         self.sensor = sensor
         self.is_alive = False
+        
+        # Security
+        self.private_key, self.public_key = self.generate_key_pair()
         
         # Logger
         self.logger = logging.getLogger(self.name)
@@ -133,8 +141,32 @@ class OperatingComputer:
             return False
 
 
+    # SECURITY ----------------------------------------------------------------
+    def generate_key_pair(self):
+        key_size = 4096
+
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,  # Do not change
+            key_size=key_size,
+        )
+
+        public_key = private_key.public_key()
+        return private_key, public_key
     # GRPC ----------------------------------------------------------------
     
+    def send_public_key_to_server(self):
+        public_key_pem = self.public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        request = sensor_pb2.PublicKeyRequest(id=self.id, public_key=public_key_pem, sensor_id=self.sensor.lower())
+        try:
+            response = self.stub.SendPublicKeyToServer(request)
+            self.logger.info(f"Public key sent to server: {response.message}")
+            self.logger.info(f"Public key: {self.public_key}")
+        except grpc.RpcError as e:
+            self.logger.error(f'Error in send public key: {e.details()}')
+        
     # Trigger the sensor to capture an image    
     def trigger_capture(self):
         sensor_id = self.sensor.lower()
@@ -143,17 +175,25 @@ class OperatingComputer:
         self.logger.info(f'Triggering capture for sensor {sensor_id}...')
 
         # Create a TriggerRequest object to send to the sensor
-        request = sensor_pb2.TriggerRequest(id=sensor_id)
+        request = sensor_pb2.TriggerRequest(id=self.id, sensor_id=self.sensor.lower())
 
         # Call the TriggerCapture method on the gRPC service
         try:
             response = self.stub.TriggerCapturePc(request)
             # Handle the image data response
             self.logger.info(f'Capture response received from sensor {sensor_id}')
-            self.logger.info(f'{response.image_data}')
+            decrypted_image = self.private_key.decrypt(
+                response.image_data,
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
+            )
+            self.logger.info(f'{decrypted_image}')
             self.logger.info(f'Image for sensor {sensor_id} saved successfully.')
         except grpc.RpcError as e:
-            self.logger.error(f'Error triggering sensor {sensor_id}: {e.details()}')
+            self.logger.error(f'Error triggering sensor {sensor_id}: {e}')
 
     # HELPER METHODS ----------------------------------------------------------------
     def get_sensor_ids(self):
