@@ -15,7 +15,6 @@ importlib_metadata==8.5.0
 itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==3.0.2
--e git+https://gitlab.com/dawson-csy3-24-25/540/section2/team-assignment-1/byte-bandits/data-com-project.git@4e6e4c1fd54ca5e010cffad2c50ac224c8590d72#egg=my_project&subdirectory=milestone4
 nest-asyncio==1.6.0
 numpy==2.1.3
 packaging==24.2
@@ -27,7 +26,6 @@ python-dateutil==2.9.0.post0
 pytz==2024.2
 requests==2.32.3
 retrying==1.3.4
-sensor_project @ file:///C:/Dawson/Semester5/Datacommunication/A1Project/data-com-project/milestone4
 six==1.16.0
 tenacity==9.0.0
 typing_extensions==4.12.2

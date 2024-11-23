@@ -1,6 +1,10 @@
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from abc import ABC, abstractmethod
-from event_queue import Event, EventQueue
+from event import Event
 from config import Config
 from threading import Lock, Thread
 import os
@@ -13,37 +17,29 @@ import datetime
 import json
 import grpc
 from concurrent import futures
-import proto.sensor_pb2 as sensor_pb2
-import proto.sensor_pb2_grpc as grpc_sensor
+from proto import sensor_pb2
+from proto import sensor_pb2_grpc as grpc_sensor
+from PIL import Image
+import io
 
-class Sensor(grpc_sensor.SingleSensor,ABC):
-  def __init__(self, id, type, port):
-    # Params validation
-    if not isinstance(id, str):
-      raise Exception('Invalid sensor id')
-    if not isinstance(type, str):
-      raise Exception('Invalid sensor type')
-    if not isinstance(port, int):
-      raise Exception('Invalid port number')
+class Sensor(grpc_sensor.SingleSensor):
+  def __init__(self, id: str, port: int):
     # Params
     self.id = id
-    self.type = type
     self.port = port
     # Internal
     self.is_active = True
-    self.name = f'{type} Sensor {id}' 
-    self.eventsQueue = EventQueue()
+    self.name = f'Sensor {id}' 
     self.threads = []
     self.ip = "localhost"
     
     # Logger
     self.logger = logging.getLogger(self.name)
-    self.logger = logging.LoggerAdapter(self.logger, {'sensor_name': f'{self.type[0:3]}. Sensor {self.id}'})
+    self.logger = logging.LoggerAdapter(self.logger, {'sensor_name': f'Sensor {self.id}'})
     self.lock = Lock()
     
     # MQTT
     self.client = mqtt.Client(client_id=self.name, callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata=None)
-    self.topic = f'/sensor/{self.type.lower()}/{self.id}'
     self.client.on_connect = self.on_connect
 
     # GRPC
@@ -53,6 +49,7 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
   
   
   def start(self):
+    self.is_active = True
     # Connect to MQTT broker
     self.client.connect(Config.HOSTNAME, Config.PORT)
     self.client.loop_start()
@@ -61,11 +58,6 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     motion_simulation_thread = Thread(target=self.simulate_motion)
     self.threads.append(motion_simulation_thread)
     motion_simulation_thread.start()
-    
-    # Read event queue
-    read_event_queue_thread = Thread(target=self.read_event_queue)
-    self.threads.append(read_event_queue_thread)
-    read_event_queue_thread.start()
 
     # Start the GRPC server
     self.send_address_to_server()
@@ -93,13 +85,6 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       self.logger.warning(f'Closed GRPC channel')
       
   # MOTION SIMULATION METHODS -----------------------------
-  
-  # Read the event queue and publish the events
-  def read_event_queue(self):
-    while self.is_active:
-        event = self.eventsQueue.get_event()
-        image= self.capture_event()
-        self.publish_event(event, image)
         
   # Simulate motion detection
   def simulate_motion(self):
@@ -110,15 +95,18 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
       random_inteval = random.uniform(min_interval, max_interval)
       time.sleep(random_inteval)
       
-      # Create new event
-      event_type = Config.EVENT_TYPE
-      event_time = datetime.datetime.now().strftime(Config.DATE_FORMAT)
-      sensor_value = self.get_sensor_value()
-      motion_event = Event(event_type, event_time, sensor_value)
+      temperature = self.get_temperature()
+      wind = self.get_wind()
+      humidity = self.get_humidity()
       
-      # Add event to queue
-      self.eventsQueue.add_event(motion_event)
+      # Publish event to MQTT broker
       self.logger.info(f'MOTION EVENT HAPPENED')
+      image = self.capture_event()
+      self.publish_image(image)
+      self.publish_temperature(temperature)
+      self.publish_wind(wind)
+      self.publish_humidity(humidity)
+      self.publish_all(humidity, temperature, wind)
       
   # MQTT METHODS -----------------------------
   
@@ -129,35 +117,98 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
     else:
         self.logger.info(f'Failed to connect to MQTT broker', return_code)  
   
-  # Publish the event to the MQTT broker
-  def publish_event(self, event,image):
-    if not isinstance(event, Event):
-      raise Exception('Invalid event type')
-    if not isinstance(image, bytes):
-      raise Exception('Invalid image type')
+  def publish_image(self, image: bytes):
      # Serialize the byte array using base64 encoding
     encoded_image = base64.b64encode(image).decode('utf-8')
     data = {
       'id': self.id,
       'name': self.name,
-      'type': event.type,
-      'time': event.time,
-      'data': event.value,
+      'type': 'image',
       'image': encoded_image
     }
     data = json.dumps(data)
-    result = self.client.publish(topic = self.topic, payload = data)
+    topic = f'/sensor/image/{self.id}'
+    result = self.client.publish(topic = topic, payload = data)
     status = result[0]
     if status == 0:
-      self.logger.info(f'Message sent to topic {self.topic}') 
+      self.logger.info(f'Message sent to topic {topic}') 
     else:
-      self.logger.error(f'Failed to send message to topic {self.topic}')
+      self.logger.error(f'Failed to send message to topic {topic}')
+
+  def publish_temperature(self, temperature: int):
+    data = {
+      'id': self.id,
+      'name': self.name,
+       'type': 'temperature',
+      'temperature': temperature
+    }
+    data = json.dumps(data)
+    topic = f'/sensor/temp/{self.id}'
+    result = self.client.publish(topic = topic, payload = data)
+    status = result[0]
+    if status == 0:
+      self.logger.info(f'Message sent to topic {topic}') 
+    else:
+      self.logger.error(f'Failed to send message to topic {topic}')
   
-  # ABSTRACT METHODS -----------------------------
-  # Each sensor type returns a different value
-  @abstractmethod
-  def get_sensor_value(self):
-      pass
+  def publish_wind(self, wind: int):
+    data = {
+      'id': self.id,
+      'name': self.name,
+      'type': 'wind',
+      'wind': wind
+    }
+    data = json.dumps(data)
+    topic = f'/sensor/wind/{self.id}'
+    result = self.client.publish(topic = topic, payload = data)
+    status = result[0]
+    if status == 0:
+      self.logger.info(f'Message sent to topic {topic}') 
+    else:
+      self.logger.error(f'Failed to send message to topic {topic}')
+      
+  def publish_humidity(self, humidity: int):
+    data = {
+      'id': self.id,
+      'name': self.name,
+      'type': 'humidity',
+      'humidity': humidity
+    }
+    data = json.dumps(data)
+    topic = f'/sensor/humidity/{self.id}'
+    result = self.client.publish(topic = topic, payload = data)
+    status = result[0]
+    if status == 0:
+      self.logger.info(f'Message sent to topic {topic}') 
+    else:
+      self.logger.error(f'Failed to send message to topic {topic}')
+  
+  def publish_all(self, humidity: int, temperature: int, wind: int):
+    data = {
+      'id': self.id,
+      'name': self.name,
+      'type': 'all',
+      'humidity': humidity,
+      'temperature': temperature,
+      'wind': wind
+    }
+    data = json.dumps(data)
+    topic = f'/sensor/all/{self.id}'
+    result = self.client.publish(topic = topic, payload = data)
+    status = result[0]
+    if status == 0:
+      self.logger.info(f'Message sent to topic {topic}') 
+    else:
+      self.logger.error(f'Failed to send message to topic {topic}')
+  
+  # VALUE METHODS -----------------------------
+  
+  def get_humidity(self):
+    return random.uniform(Config.HUMIDITY_MIN_VALUE, Config.HUMIDITY_MAX_VALUE)
+  def get_temperature(self):
+    return random.uniform(Config.TEMPERATURE_MIN_VALUE, Config.TEMPERATURE_MAX_VALUE)
+  def get_wind(self):
+    return random.uniform(Config.WIND_MIN_VALUE, Config.WIND_MAX_VALUE)
 
   # GRPC METHODS -----------------------------
   
@@ -195,12 +246,14 @@ class Sensor(grpc_sensor.SingleSensor,ABC):
   # CAMERA METHODS -----------------------------
   
   # Return random byte array as an image
-  # TODO: Implement the camera capture
   def capture_event(self):
     with self.lock:
-        image = os.urandom(4)
-        self.logger.info(f'Capture triggered.')
-        return image
-    
+      # Simulate image capture
+      with open(os.path.abspath(os.path.join(os.path.dirname(__file__), './f1.jpg')), "rb") as image_file:
+        image = Image.open(image_file)
+        byte_array = io.BytesIO()
+        image.save(byte_array, format=image.format)
+        return byte_array.getvalue()
+  
 
 
