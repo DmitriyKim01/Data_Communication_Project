@@ -1,0 +1,308 @@
+*{
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+.Select.is-clearable.is-searchable.Select--single {
+  width: 10rem;
+}
+/* General App Container */
+.app-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 20px;
+}
+
+/* Main Content Container */
+.main-container {
+  width: 70%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 12px 24px rgba(0, 0, 0, 0.1);
+  background-color:aliceblue ;
+
+}
+.header-bar {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  background-color: #f5f5f5; /* Light gray background */
+  padding: 10px;
+  border-bottom: 2px solid #ccc;
+}
+
+.header-item {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+/* Top Bar */
+.top-bar {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+  justify-content: space-evenly;
+}
+
+.top-bar-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Trigger Button */
+#trigger-btn {
+  background-color: #afa5a500;
+  color: #030303;
+  width: 6rem;
+  height: 2.9em;
+  border: #b48b10 0.2em solid;
+  border-radius: 11px;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+#trigger-btn:hover {
+  scale: 1.05;
+  background-color: #b48b10;
+  cursor: pointer;
+  color: white;
+}
+#trigger-btn:active {
+border-color: #1f1e1e;
+scale: 1;
+}
+/* Enable Button */
+#enable-btn {
+  background-color: #e0f7fa00;
+  color: #00695c;
+  width: 6rem;
+  height: 2.9em;
+  border: #00695c 0.2em solid;
+  border-radius: 11px;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+#enable-btn:hover {
+  scale: 1.05;
+  background-color: #00695c;
+  color: white;
+  cursor: pointer;
+}
+#enable-btn:active {
+  border-color: #1f1e1e;
+  scale: 1;
+  }
+/* Disable Button */
+#disable-btn {
+  background-color: #ffebee00;
+  color: #b71c1c;
+  width: 6rem;
+  height: 2.9em;
+  border: #b71c1c 0.2em solid;
+  border-radius: 11px;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+#disable-btn:hover {
+  scale: 1.05;
+  background-color: #b71c1c;
+  color: white;
+  cursor: pointer;
+}
+#disable-btn:active {
+
+  border-color: #1f1e1e;
+  scale: 1;
+  }
+
+
+.text {
+  margin: 0 1.5em
+}
+
+/* Top Bar Extra Section */
+#top-bar-extra {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  
+}
+/* Divider between sections */
+
+.vertical-divider {
+  width: 3px;
+  height: 40px; 
+  background-color: #000000; 
+  margin: 0 10px;
+}
+
+/* Dropdown Styling */
+.dropdown {
+  width: 150px;
+}
+
+/* Subscribe Button */
+.subscribe-button {
+  background-color: #96c1ee00; 
+  color: black; 
+  width: 6rem;
+  height: 2.9em;
+  border: #b48b10 0.2em solid;
+  border-radius: 11px;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.subscribe-button:hover {
+  scale: 1.05;
+  background-color: #b48b10; 
+  color: white; 
+}
+#subscribe-btn:active {
+
+  border-color: #1f1e1e;
+  scale: 1;
+  }
+
+/* Middle Area */
+.middle-area {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.log-section {
+  width: 48%;
+  display: inline-block;
+  padding: 10px;
+}
+
+.log-section ul {
+  font-weight: bold;
+}
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  justify-content: center;
+}
+.log-header h5{
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  padding: 10px 0;
+  margin-left: 10px;
+}
+.log-header button{
+  background-color: #ede6e5;
+  color: rgb(24, 23, 23);
+  width: 8rem;
+  height: 2.9em;
+  border: #d8dcdc 0.2em solid;
+  border-radius: 11px;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  font-weight: bold;
+}
+.log-header button:hover{
+  scale: 1.05;
+  background-color: #eb9e95;
+  cursor: pointer;
+}
+.log-header button:active{
+  background-color: #d9534f;
+  border-color: #1f1e1e;
+  scale: 1;
+}
+
+.log-content {
+  height: 300px;
+  border: 2px solid black;
+  padding: 30px;
+  overflow-y: auto;
+  margin-top: 15px;
+  border-radius: 2rem;
+}
+#action-log {
+  list-style-type: none;
+}
+#action-log li::before{
+  content: "- ";
+
+}
+/* Bottom Bar */
+.bottom-bar {
+  border-top: 1px solid #ccc;
+  border: 2px solid #000000;
+  border-radius: 10px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100%;
+}
+
+.sensor-requestor-container {
+  width: 100%;
+  display: block;
+  padding: 8px;
+}
+
+.sensor-requestor-header {
+  margin: 1px;
+  border-bottom: 1px solid #ccc;
+  width: 20%;
+  font-weight: 600;
+  font-size: 15px;
+}
+#get-ids-btn {
+  background-color: #afa5a500;
+  color: #030303;
+  width: 6rem;
+  height: 2.9em;
+  border: #83817b 0.2em solid;
+  border-radius: 11px;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: bold;
+  margin-left: 1rem;
+}
+
+#get-ids-btn:hover{
+  scale: 1.05;
+  background-color: #ebe8df;
+  cursor: pointer;
+  color: rgb(0, 0, 0);
+}
+#get-ids-btn:active{
+  border-color: #1f1e1e;
+  scale: 1;
+}
+
+.bottom-bar-actions {
+  width: 100%;
+  height: 50px;
+  display: flex;
+  text-align: right;
+  padding-right: 20px;
+  overflow-x: auto;
+  align-items: center;
+}
+
+.ids-area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}

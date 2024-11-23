@@ -8,7 +8,7 @@ from config import Config
 import time
 import json
 import base64
-
+import threading
 class OperatingComputer:
     def __init__(self, id, trigger, listen, type, sensor):
         # Params
@@ -41,26 +41,12 @@ class OperatingComputer:
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.connected = False
-
+        self.log = []
+        self.log_lock = threading.Lock()
         # gRPC
         self.channel = grpc.insecure_channel(Config.GRPC_SERVER_ADDRESS)  
         self.stub = sensor_pb2_grpc.SensorServerStub(self.channel)
-        
-    def start(self):
-        self.is_alive = True
-        
-        if self.trigger and self.listen:
-            self.logger.info("Triggering and Listening sensors")
-            self.trigger_capture()
-            self.listen_to_sensors()
-        elif self.trigger and not self.listen:
-            self.logger.info("Triggering sensors")
-            self.trigger_capture()
-        else:
-            self.logger.info("Listening to sensors")
-            self.listen_to_sensors()
-        while True:
-            time.sleep(1)
+        self.subscribed_topics = set()
 
     def disconnect(self):
         self.client.loop_stop()
@@ -76,54 +62,70 @@ class OperatingComputer:
             self.logger.info('Failed to connect to MQTT broker', return_code)
             
     def on_message(self, client, userdata, message):
-        # Decode the message payload
         payload = message.payload.decode('utf-8')
         data = json.loads(payload)
         encoded_image = data.get('image')
         if encoded_image:
-            # Decode the encoded base64 image
-            decoded_image = base64.b64decode(encoded_image)
-            data['image'] = decoded_image
-        self.logger.info(f'Received message: {data}')
-        
-    def listen_to_sensors(self):
-        # Connect to MQTT broker
-        self.client.connect(Config.HOSTNAME, Config.PORT)
-        self.client.loop_start()
-        while not self.connected:
-            self.logger.info('Waiting for MQTT connection...')
-            time.sleep(1)
-        
-        if self.Type.lower() not in [sensor_type.lower() for sensor_type in Config.SENSOR_TYPES]:
-            self.logger.error('Invalid sensor type')
-            exit(1)
+            with self.log_lock:
+                self.log.append(f"Received data from sensor : {self.sensor} at {time.ctime()}")
 
-        sensor_id = self.sensor.lower()
+    def get_log(self):
+        with self.log_lock:
+            if len(self.log) > 0:
+                return self.log 
+            else:
+                return None 
+    def clear_log(self):
+        with self.log_lock:
+            if len(self.log) >0:
+                self.log.clear()
 
-        sensor_type = self.Type.lower()
-        if not self.is_valid_sensor_id(sensor_id):
-            self.client.disconnect()
-            return
         
-        sensor_topic = self.validate_sensor_topic(sensor_type, sensor_id)
-        self.client.subscribe(sensor_topic)
-        self.logger.info(f'Subscribed to topic: {sensor_topic}')
-        
-    def validate_sensor_topic(self, sensor_type, sensor_id):
-        sensor_topic = ''
-        # Subscribe to any sensor topic
-        if sensor_type == 'all' and sensor_id == 'all':
-            sensor_topic = '/sensor/#'
-        # Subscribe to all sensors with a specific id
-        elif sensor_type == 'all' and sensor_id != 'all':
-            sensor_topic = f'/sensor/+/{sensor_id}'
-        # Subscribe to all sensors of a specific type
-        elif sensor_type != 'all' and sensor_id == 'all':
-            sensor_topic = f'/sensor/{sensor_type}/+'
-        # Subscribe to a specific sensor
-        else:
-            sensor_topic = f'/sensor/{sensor_type}/{sensor_id}'
-        return sensor_topic
+    def listen_to_sensors(self, sensor_type, sensor_id):
+        try:
+            # Ensure client is connected
+            if not self.connected:
+                self.client.connect(Config.HOSTNAME, Config.PORT)
+                self.client.loop_start()
+
+                # Wait for connection with timeout
+                start_time = time.time()
+                while not self.connected:
+                    if time.time() - start_time > Config.CONNECTION_TIMEOUT:
+                        self.logger.error("MQTT connection timed out.")
+                        self.client.loop_stop()
+                        return False
+                    time.sleep(0.1)
+
+            # Validate sensor type
+            valid_types = [st.lower() for st in Config.SENSOR_TYPES]
+            if sensor_type.lower() not in valid_types:
+                self.logger.error(f"Invalid sensor type: {sensor_type}")
+                return False
+
+            # Validate sensor ID
+            if not self.is_valid_sensor_id(sensor_id):
+                return False
+
+            # Convert to lowercase and construct the topic
+            topic = f"/sensor/{sensor_type.lower()}/{sensor_id.lower()}"
+
+            # Append to subscribed topics if not already subscribed
+            if not hasattr(self, 'subscribed_topics'):
+                self.subscribed_topics = set() 
+
+            if topic not in self.subscribed_topics:
+                self.client.subscribe(topic)
+                self.subscribed_topics.add(topic)
+                self.logger.info(f"Successfully subscribed to topic: {topic}")
+            else:
+                self.logger.info(f"Already subscribed to topic: {topic}")
+
+            return True
+        except Exception as e:
+            self.logger.error(f"Error in listen_to_sensors: {e}")
+            return False
+
 
     # GRPC ----------------------------------------------------------------
     
@@ -162,61 +164,14 @@ class OperatingComputer:
 
     def is_valid_sensor_id(self, sensor_id):
         '''Helper method to check if the sensor ID is valid.'''
+        if sensor_id == "+":
+            return True
         valid_sensor_ids = self.get_sensor_ids()
         if sensor_id not in valid_sensor_ids:
             self.logger.error(f'Invalid sensor ID: {sensor_id}. Valid IDs are: {", ".join(valid_sensor_ids)}')
             return False
         return True
 
-# Filter for logging
-class ComputerNameFilter(logging.Filter):
-    def filter(self, record):
-        if not hasattr(record, 'computer_name'):
-            record.computer_name = 'N/A'
-        return True
-      
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--id', default='0001', help='Identifies computer')
-    parser.add_argument('-t', '--trigger', action='store_true', help='Allows computer to trigger sensors')
-    parser.add_argument('-l', '--listen', action='store_true', help='Allows computer to listen to sensors')
-    parser.add_argument('-T', '--type', help='Sensor type')
-    parser.add_argument('-s', '--sensor', help='Sensor ID')
-    parser.add_argument('-a', '--all', action='store_true', help="Returns a list of available ids to trigger.")
-    args = parser.parse_args()
 
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format=f'%(levelname)s - [{Config.HOSTNAME}:{Config.PORT}] - (%(computer_name)s) - %(message)s'
-    )
-    logger = logging.getLogger()
-    logger.addFilter(ComputerNameFilter())
 
-    # If -a is used, display available sensor IDs but don't exit
-    if args.all:
-        computer = OperatingComputer(args.id, False, False, '', '')
-        available_ids = computer.get_sensor_ids()
-        logger.info(f"Available Sensor Ids are {available_ids}")
-    
-    # Check if required arguments are passed for normal operation
-    if not args.type:
-        logger.error('Computer must specify a sensor type ( -T | --type )')
-        exit(1)
-    if not args.sensor:
-        logger.error('Computer must specify a sensor ID ( -s | --sensor )')
-        exit(1)
-    if not args.trigger and not args.listen:
-        logger.error('Computer must specify a trigger flag ( -t | --trigger ) or a listen flag ( -l | --listen )')
-        exit(1)
-
-    # Create a new computer instance
-    computer = OperatingComputer(args.id, args.trigger, args.listen, args.type, args.sensor)
-    
-    try:
-        computer.start()
-    except KeyboardInterrupt:
-        logger.warning("Keyboard interruption trapped. Shutting down...")
-        computer.disconnect()
-        logger.info("Shutdown complete.")
