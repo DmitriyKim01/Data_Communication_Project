@@ -262,7 +262,7 @@ if __name__ == '__main__':
     # Create a new computer instance
     computer = OperatingComputer("0001", True, False, "all", "0001")
     computer.send_public_key_to_server()
-    computer.trigger_capture()
+    computer.get_sensor_ids()
     try:
         app.run_server(debug=False, port=50129)
     except KeyboardInterrupt:

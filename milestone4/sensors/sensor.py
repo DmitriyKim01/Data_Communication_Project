@@ -240,7 +240,8 @@ class Sensor(grpc_sensor.SingleSensor):
       return sensor_pb2.PublicKeyResponse() 
     # Ensure the sensor exists
     try:
-      self.computer_to_public_key[request.id] = request.public_key
+      public_key = serialization.load_pem_public_key(request.public_key)
+      self.computer_to_public_key[request.id] = public_key
       self.logger.info(f"Received public key from server")
       return sensor_pb2.PublicKeyResponse(message="Public key received successfully")
     except Exception as e:
@@ -263,8 +264,7 @@ class Sensor(grpc_sensor.SingleSensor):
     try:
         image_data = self.capture_event()  
         self.logger.info(f"{type(image_data)}")
-        public_key_pem = self.computer_to_public_key[sensor_id]
-        public_key = serialization.load_pem_public_key(public_key_pem)
+        public_key = self.computer_to_public_key[sensor_id]
         encrypted_image_data = public_key.encrypt(
             b'test fdsfdsfsdfs fds fsdf sdf sdf sdf sdf dsf sd',
             padding.OAEP(

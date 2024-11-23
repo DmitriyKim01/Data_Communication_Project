@@ -200,9 +200,19 @@ class OperatingComputer:
         """Fetch and return all available sensor IDs from the gRPC server."""
         try:
             # Call the GetSensorIds method to get the list of sensor IDs
-            response = self.stub.GetSensorIds(sensor_pb2.EmptyRequest())
-            sensor_ids = [sensor_id for sensor_id in response.ids]
-            self.logger.info('Available sensor IDs:')
+            request = sensor_pb2.SensorIdsRequest(id=self.id)
+            response = self.stub.GetSensorIds(request)
+            
+            descrypted_ids_json = self.private_key.decrypt(
+                response.ids,
+                padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+                )
+            )
+            sensor_ids = json.loads(descrypted_ids_json.decode('utf-8'))
+            self.logger.info(sensor_ids)
             return sensor_ids
         except grpc.RpcError as e:
             self.logger.error(f'Error fetching sensor IDs: {e.details()}')
