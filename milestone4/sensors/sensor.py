@@ -23,6 +23,7 @@ from PIL import Image
 import io
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 
@@ -255,32 +256,21 @@ class Sensor(grpc_sensor.SingleSensor):
     # Check if computer has sent his public key
     if self.computer_to_public_key.get(request.id) is None:
       context.set_code(grpc.StatusCode.UNAUTHENTICATED)
-      return sensor_pb2.CaptureResponse(image_data=b'Unauthorized')
+      return sensor_pb2.CaptureResponse()
     
     # Ensure the sensor exists
     if sensor_id != self.id:
       context.set_code(grpc.StatusCode.NOT_FOUND)
-      return sensor_pb2.CaptureResponse(image_data=b'invalid Sensor') 
+      return sensor_pb2.CaptureResponse() 
     try:
         image_data = self.capture_event()  
         self.logger.info(f"{type(image_data)}")
-        public_key = self.computer_to_public_key[sensor_id]
-        encrypted_image_data = public_key.encrypt(
-            b'test fdsfdsfsdfs fds fsdf sdf sdf sdf sdf dsf sd',
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-          )
-        )
-        print(encrypted_image_data)
-        self.logger.info(f"Encrypted image type {type(encrypted_image_data)}")
-        return sensor_pb2.CaptureResponse(image_data=encrypted_image_data)
+        return sensor_pb2.CaptureResponse(image_data=image_data)
     except Exception as e:
         self.logger.error(f"Error capturing image: {e}")
         context.set_details(f"Error capturing image: {e}")
         context.set_code(grpc.StatusCode.INTERNAL)
-        return sensor_pb2.CaptureResponse(image_data=b'Errorrrrr')
+        return sensor_pb2.CaptureResponse()
   
   # CAMERA METHODS -----------------------------
   

@@ -181,16 +181,9 @@ class OperatingComputer:
         try:
             response = self.stub.TriggerCapturePc(request)
             # Handle the image data response
+            
             self.logger.info(f'Capture response received from sensor {sensor_id}')
-            decrypted_image = self.private_key.decrypt(
-                response.image_data,
-                padding.OAEP(
-                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                    algorithm=hashes.SHA256(),
-                    label=None
-                )
-            )
-            self.logger.info(f'{decrypted_image}')
+            self.logger.info(f'Image data: {response.image_data}')
             self.logger.info(f'Image for sensor {sensor_id} saved successfully.')
         except grpc.RpcError as e:
             self.logger.error(f'Error triggering sensor {sensor_id}: {e}')
