@@ -79,6 +79,7 @@ class OperatingComputer:
         payload = message.payload.decode('utf-8')
         data = json.loads(payload)
         encoded_image = data.get('image')
+        print(f'Received Data: {payload}')
         if encoded_image:
             with self.log_lock:
                 self.log.append(f"Received data:{payload} from sensor : {self.sensor} at {time.ctime()}")
