@@ -72,16 +72,20 @@ def get_sensor_ids_and_options(n_clicks):
     Output('action-log', 'children'),  
     [Input('trigger-btn', 'n_clicks'),  
      Input('clear-action-log-btn', 'n_clicks'),
-     Input('subscribe-btn', 'n_clicks')],  
+     Input('subscribe-btn', 'n_clicks'),
+     Input('enable-btn', 'n_clicks'),
+     Input('disable-btn', 'n_clicks')],  
     [State('select-dropdown', 'value'),  
      State('type-dropdown', 'value'),  
      State('sensor-id-dropdown', 'value')]  
 )
-def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, selected_option, sensor_type, sensor_id):
+def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, enable_clicks, disable_clicks, selected_option, sensor_type, sensor_id):
     global action_log  # Ensure we use the global action log list
     trigger_clicks = trigger_clicks or 0
     clear_clicks = clear_clicks or 0
     subscribe_clicks = subscribe_clicks or 0
+    enable_clicks = enable_clicks or 0
+    disable_clicks = disable_clicks or 0
 
     # Determine the triggering input
     triggered_id = ctx.triggered_id
@@ -121,9 +125,18 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, selected_o
             except Exception as e:
                 logging.error(f"Subscription failed: {str(e)}")
                 action_log.append(html.Li(f"Error during subscription: {str(e)}", style={'color': 'red'}))
+                
+    #Handling enable/disable logic
+     # Enable button logic (add your own logic here)
+    elif triggered_id == 'enable-btn':
+        action_log.append(html.Li(f"Enable button clicked at {time.ctime()}", style={'color': 'green'}))
 
+    # Disable button logic (add your own logic here)
+    elif triggered_id == 'disable-btn':
+        action_log.append(html.Li(f"Disable button clicked at {time.ctime()}", style={'color': 'red'}))
     # Return the updated action log
     return action_log
+
 
 
 @app.callback(
