@@ -81,7 +81,7 @@ class OperatingComputer:
         encoded_image = data.get('image')
         if encoded_image:
             with self.log_lock:
-                self.log.append(f"Received data from sensor : {self.sensor} at {time.ctime()}")
+                self.log.append(f"Received data:{payload} from sensor : {self.sensor} at {time.ctime()}")
 
     def get_log(self):
         with self.log_lock:

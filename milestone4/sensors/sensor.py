@@ -62,9 +62,9 @@ class Sensor(grpc_sensor.SingleSensor):
     self.client.loop_start()
     
     # Simulate motion detection
-    # motion_simulation_thread = Thread(target=self.simulate_motion)
-    # self.threads.append(motion_simulation_thread)
-    # motion_simulation_thread.start()
+    motion_simulation_thread = Thread(target=self.simulate_motion)
+    self.threads.append(motion_simulation_thread)
+    motion_simulation_thread.start()
 
     # Start the GRPC server
     self.send_address_to_server()
