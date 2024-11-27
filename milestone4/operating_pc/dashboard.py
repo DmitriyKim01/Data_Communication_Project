@@ -8,14 +8,8 @@ import dash
 from dash import dcc, html, Input, Output, callback, State, ctx
 import logging
 import paho.mqtt.client as mqtt
-import argparse
-import grpc
-import proto.sensor_pb2 as sensor_pb2 
-import proto.sensor_pb2_grpc as sensor_pb2_grpc
 from config import Config
 import time
-import json
-import base64
 from computer import OperatingComputer
 
 # -------------------------- Logging Setup --------------------------
