@@ -146,12 +146,10 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, enable_cli
                 action_log.append(html.Li(f"Error during subscription: {str(e)}", style={'color': 'red'}))
                 
     #Handling enable/disable logic
-     # Enable button logic (add your own logic here)
     elif triggered_id == 'enable-btn':
         action_log.append(html.Li(f"Enable button clicked at {time.ctime()}", style={'color': 'green'}))
         computer.enable_sensor(sensor_id=selected_option)
 
-    # Disable button logic (add your own logic here)
     elif triggered_id == 'disable-btn':
         action_log.append(html.Li(f"Disable button clicked at {time.ctime()}", style={'color': 'red'}))
         computer.disable_sensor(sensor_id=selected_option)
