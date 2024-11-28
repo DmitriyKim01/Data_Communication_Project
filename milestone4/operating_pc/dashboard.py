@@ -292,7 +292,9 @@ html.Div([
 if __name__ == '__main__':
     # Create a new computer instance
     computer = OperatingComputer("0001", True, False, "all", "0001")
-    computer.send_public_key_to_server()
+    computer.send_public_key_to_server("0001")
+    computer.send_public_key_to_server("0002")
+    computer.send_public_key_to_server("0003")
     try:
         app.run_server(debug=False, port=60234)
     except KeyboardInterrupt:

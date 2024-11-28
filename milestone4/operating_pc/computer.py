@@ -154,12 +154,12 @@ class OperatingComputer:
         return private_key, public_key
     # GRPC ----------------------------------------------------------------
     
-    def send_public_key_to_server(self):
+    def send_public_key_to_server(self,sensor_id):
         public_key_pem = self.public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
-        request = sensor_pb2.PublicKeyRequest(id=self.id, public_key=public_key_pem, sensor_id=self.sensor.lower())
+        request = sensor_pb2.PublicKeyRequest(id=self.id, public_key=public_key_pem, sensor_id=sensor_id)
         try:
             response = self.stub.SendPublicKeyToServer(request)
             self.logger.info(f"Public key sent to server: {response.message}")

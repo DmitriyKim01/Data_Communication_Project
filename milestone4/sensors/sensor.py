@@ -267,11 +267,7 @@ class Sensor(grpc_sensor.SingleSensor):
   # Triggered when the GRPC server receives a request to capture an image
   def TriggerCapture(self, request, context):
     sensor_id = request.sensor_id
-    # Check if computer has sent his public key
-    if self.computer_to_public_key.get(request.sensor_id) is None:
-      context.set_code(grpc.StatusCode.UNAUTHENTICATED)
-      return sensor_pb2.CaptureResponse()
-    
+
     # Ensure the sensor exists
     if sensor_id != self.id:
       context.set_code(grpc.StatusCode.NOT_FOUND)
