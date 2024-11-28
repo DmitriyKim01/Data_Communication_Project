@@ -184,6 +184,7 @@ class OperatingComputer:
             self.logger.info(f'Capture response received from sensor {sensor_id}')
             self.logger.info(f'Image data: {response.image_data}')
             self.logger.info(f'Image for sensor {sensor_id} saved successfully.')
+            return response
         except grpc.RpcError as e:
             self.logger.error(f'Error triggering sensor {sensor_id}: {e}')
     

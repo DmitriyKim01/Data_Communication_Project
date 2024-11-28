@@ -13,7 +13,7 @@ import time
 import base64
 from computer import OperatingComputer
 image_path = 'assets/f1.jpg'
-
+image_data = ''
 def b64_image(image_filename):
     with open(image_filename, 'rb') as f:
         image = f.read()
@@ -99,11 +99,28 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, enable_cli
     elif triggered_id == 'trigger-btn':
         # Handle trigger button logic
         if selected_option:
-            computer.trigger_capture(selected_option)
+            response = computer.trigger_capture(selected_option)
+            
+            # Ensure the 'assets' folder exists, create it if necessary
+            assets_folder = os.path.join(os.path.dirname(__file__), "assets")
+            if not os.path.exists(assets_folder):
+                os.makedirs(assets_folder)
+            
+            # Save the image to the assets folder
+            image_path = os.path.join(assets_folder, "image.jpg")
+            with open(image_path, "wb") as f:
+                f.write(response.image_data)
+            
+            # Create the image element with the correct relative path to the assets folder
+            image_element = html.Img(src=f"/assets/image.jpg", style={"width": "50px", "height": "auto"})
+            
+            # Create the log entry with the image and text
             new_log = html.Li(
-                f"Trigger button clicked at {time.ctime()}, selected option: {selected_option}",
+                [
+                    image_element  
+                ],
                 style={"color": "orange"}
-            )
+            )         
         else:
             new_log = html.Li(
                 "no option selected",
