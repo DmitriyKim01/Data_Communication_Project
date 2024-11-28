@@ -51,6 +51,18 @@ You can use web dashboard by running:
 
 Before running the system, ensure that each terminal has its environment variables set up. This can be done by activating a virtual environment or setting the required environment variables.
 
+### Step 1.5 Generate proto files
+
+1. Generate proto files
+
+  ```bash
+ python /proto/generate_proto.py
+  ```
+
+2. Change the import type in sensor_pb2_grpc.py
+
+Instead of (import sensor_pb2 as sensor__pb2) change it to (from proto import sensor_pb2 as sensor__pb2)
+
 ### Step 2: Start the Middleware
 
 1. Open a terminal window and navigate to the **server** directory.
