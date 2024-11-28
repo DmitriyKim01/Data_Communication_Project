@@ -179,6 +179,7 @@ class OperatingComputer:
         # Call the TriggerCapture method on the gRPC service
         try:
             response = self.stub.TriggerCapturePc(request)
+            print(response)
             # Handle the image data response
             
             self.logger.info(f'Capture response received from sensor {sensor_id}')
@@ -191,7 +192,6 @@ class OperatingComputer:
     
     def enable_sensor(self, sensor_id):
         """Enable a sensor on the server."""
-        print("Enable_Sensor in the computer)")
         request = sensor_pb2.EnableSensorRequest(sensor_id=sensor_id)
         try:
             response = self.stub.EnableSensor(request)
