@@ -94,7 +94,7 @@ class OperatingComputer:
         with self.log_lock:
             if len(self.log) >0:
                 self.log.clear()
-
+        
         
     def listen_to_sensors(self, sensor_type, sensor_id):
         try:

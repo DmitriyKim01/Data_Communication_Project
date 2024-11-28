@@ -98,6 +98,7 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, enable_cli
     elif triggered_id == 'trigger-btn':
         # Handle trigger button logic
         if selected_option:
+            computer.trigger_capture(selected_option)
             new_log = html.Li(
                 f"Trigger button clicked at {time.ctime()}, selected option: {selected_option}",
                 style={"color": "orange"}
