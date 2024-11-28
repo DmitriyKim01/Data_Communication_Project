@@ -268,7 +268,7 @@ class Sensor(grpc_sensor.SingleSensor):
   def TriggerCapture(self, request, context):
     sensor_id = request.sensor_id
     # Check if computer has sent his public key
-    if self.computer_to_public_key.get(request.id) is None:
+    if self.computer_to_public_key.get(request.sensor_id) is None:
       context.set_code(grpc.StatusCode.UNAUTHENTICATED)
       return sensor_pb2.CaptureResponse()
     
@@ -277,10 +277,11 @@ class Sensor(grpc_sensor.SingleSensor):
       context.set_code(grpc.StatusCode.NOT_FOUND)
       return sensor_pb2.CaptureResponse() 
     try:
-      
         image_data = self.capture_event()  
+        print(image_data)
         self.logger.info(f"{type(image_data)}")
         return sensor_pb2.CaptureResponse(image_data=image_data)
+    
     except Exception as e:
         self.logger.error(f"Error capturing image: {e}")
         context.set_details(f"Error capturing image: {e}")

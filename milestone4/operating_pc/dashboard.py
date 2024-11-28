@@ -10,7 +10,14 @@ import logging
 import paho.mqtt.client as mqtt
 from config import Config
 import time
+import base64
 from computer import OperatingComputer
+image_path = 'assets/f1.jpg'
+
+def b64_image(image_filename):
+    with open(image_filename, 'rb') as f:
+        image = f.read()
+    return 'data:image/png;base64,' + base64.b64encode(image).decode('utf-8')
 
 # -------------------------- Logging Setup --------------------------
 # Set up logging configuration
@@ -125,12 +132,12 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, enable_cli
      # Enable button logic (add your own logic here)
     elif triggered_id == 'enable-btn':
         action_log.append(html.Li(f"Enable button clicked at {time.ctime()}", style={'color': 'green'}))
-        computer.enable_sensor(sensor_id=sensor_id)
+        computer.enable_sensor(sensor_id=selected_option)
 
     # Disable button logic (add your own logic here)
     elif triggered_id == 'disable-btn':
         action_log.append(html.Li(f"Disable button clicked at {time.ctime()}", style={'color': 'red'}))
-        computer.disable_sensor(sensor_id=sensor_id)
+        computer.disable_sensor(sensor_id=selected_option)
 
     # Return the updated action log
     return action_log
@@ -272,6 +279,6 @@ if __name__ == '__main__':
     computer = OperatingComputer("0001", True, False, "all", "0001")
     computer.send_public_key_to_server()
     try:
-        app.run_server(debug=False, port=50129)
+        app.run_server(debug=False, port=60234)
     except KeyboardInterrupt:
         computer.disconnect()

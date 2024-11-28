@@ -168,14 +168,13 @@ class OperatingComputer:
             self.logger.error(f'Error in send public key: {e.details()}')
         
     # Trigger the sensor to capture an image    
-    def trigger_capture(self):
-        sensor_id = self.sensor.lower()
+    def trigger_capture(self,sensor_id):
 
         '''Trigger the sensor to capture an image using gRPC.'''
-        self.logger.info(f'Triggering capture for sensor {sensor_id}...')
+       
 
         # Create a TriggerRequest object to send to the sensor
-        request = sensor_pb2.TriggerRequest(id=self.id, sensor_id=self.sensor.lower())
+        request = sensor_pb2.TriggerRequest(sensor_id=sensor_id)
 
         # Call the TriggerCapture method on the gRPC service
         try:

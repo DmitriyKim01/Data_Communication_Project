@@ -5,7 +5,6 @@ service SensorServer {
   rpc AddSensor (SensorInfo) returns (EmptyResponse);
   rpc GetSensorIds (SensorIdsRequest) returns (AvailableSensors);
   rpc SendPublicKeyToServer (PublicKeyRequest) returns (PublicKeyResponse);
-  
   rpc EnableSensor (EnableSensorRequest) returns (EnableSensorResponse);
   rpc DisableSensor(DisableSensorRequest) returns (DisableSensorResponse);
 
@@ -29,8 +28,7 @@ message PublicKeyResponse {
 }
 
 message TriggerRequest {
-    string id = 1;
-    string sensor_id = 2;
+    string sensor_id = 1;
 }
 
 message CaptureResponse {
