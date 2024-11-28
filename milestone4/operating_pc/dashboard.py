@@ -112,7 +112,10 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, enable_cli
                 f.write(response.image_data)
             
             # Create the image element with the correct relative path to the assets folder
-            image_element = html.Img(src=f"/assets/image.jpg", style={"width": "50px", "height": "auto"})
+            image_element = html.Img(
+                    src=f"/assets/image.jpg", 
+                    className="triggered-img" 
+                )
             
             # Create the log entry with the image and text
             new_log = html.Li(
