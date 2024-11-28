@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+########################################################################
+# Filename    : SenseLED.py
+# Description : Control led with infrared Motion sensor.
+# auther      : www.freenove.com
+# modification: 2023/05/11
+########################################################################
+from gpiozero import MotionSensor
+from picamera2 import Picamera2
+import time
+
+sensorPin = 17    # define sensorPin
+sensor = MotionSensor(sensorPin)
+sensor.wait_for_no_motion()
+picam2 = Picamera2()
+
+def loop():
+    # Variables to hold the current and last states
+    currentstate = False
+    previousstate = False
+    while True:
+        # Read sensor state
+        currentstate = sensor.motion_detected
+	# If the sensor is triggered
+        if currentstate == True and previousstate == False:
+            print("Motion detected!>>>")
+            # Record previous state
+            print("Taking pictures")
+            picam2.start_and_capture_files('./temp/test{:d}.jpg', initial_delay=0, delay=1, num_files=5)
+            print("Done taking pictures")
+            previousstate = True
+        # If the sensor has returned to ready state
+        elif currentstate == False and previousstate == True:
+            print("No Motion! <<")
+            previousstate = False
+        # Wait for 10 milliseconds
+        time.sleep(0.01)
+
+def destroy():
+    sensor.close()
+
+if __name__ == '__main__':     # Program entrance
+    print ('Program is starting...')
+    try:
+        loop()
+    except KeyboardInterrupt:  # Press ctrl-c to end the program.
+        destroy()
+        print("Ending program")
