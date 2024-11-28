@@ -36,6 +36,34 @@ We implemented the following assymetric encryption strategy:
 - **Sensor Architecture**: The sensors are based on an abstract class, and each sensor type inherits from this class. The main difference between sensor types is the data they generate.
 
 #### 3. Dashboard
+- **Purpose**: The Dashboard serves as the central control panel for interacting with the sensor nodes. It provides a user-friendly interface to trigger, enable, or disable sensors and view sensor data in real-time. Users can also subscribe to sensor data streams using MQTT and manage logs for the triggered actions.
+
+- **Priority**: When running the dashboard, you need to click on the Get IDs at the bottom of the page where it says Sensor Requestor to get all sensors
+- **Features**:
+  - **GRPC Controls**:
+    - **Select a Sensor**: Dropdown to choose which sensor to interact with.
+    - **Trigger**: Button to manually trigger the selected sensor to capture images.
+    - **Enable/Disable**: Buttons to enable or disable the selected sensor.
+  
+  - **MQTT Controls**:
+    - **Select Sensor ID**: Dropdown to choose a specific sensor by ID.
+    - **Select Type**: Dropdown to choose the type of sensor (Humidity, Temperature, Wind).
+    - **Subscribe**: Button to subscribe to the MQTT stream of the selected sensor.
+  
+  - **Logs**:
+    - **MQTT Log**: Displays real-time logs of the MQTT messages received from the sensors.
+    - **Action Log**: Displays logs of actions triggered on the sensors, such as enabling, disabling, or triggering. Also shows the images when triggered
+    - **Clear Log**: Button to clear both the MQTT and Action Logs.
+
+  - **Sensor Requestor**:
+    - **Get IDs**: Button to retrieve and display the available sensor IDs.
+
+- **UI Layout**:  
+  The Dashboard consists of multiple sections to interact with the sensor nodes and view relevant data. The layout includes:
+  - A control panel at the top to trigger, enable, and disable sensors via gRPC.
+  - A section for MQTT log and action logs, with buttons to clear logs.
+  - A section for interacting with the sensor requestor to get available sensor IDs.
+![dashboard ui](./images/dashboardUI.png)
 
 You can use web dashboard by running:
 
