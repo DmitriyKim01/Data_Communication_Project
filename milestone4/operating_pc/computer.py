@@ -188,7 +188,31 @@ class OperatingComputer:
             self.logger.info(f'Image for sensor {sensor_id} saved successfully.')
         except grpc.RpcError as e:
             self.logger.error(f'Error triggering sensor {sensor_id}: {e}')
-
+    
+    def enable_sensor(self, sensor_id):
+        """Enable a sensor on the server."""
+        request = sensor_pb2.EnableSensorRequest(sensor_id=sensor_id)
+        try:
+            response = self.stub.EnableSensor(request)
+            if response.status == "Sensor enabled":
+                self.logger.info(f"Sensor {sensor_id} enabled successfully.")
+            else:
+                self.logger.error(f"Failed to enable sensor {sensor_id}: {response.status}")
+        except grpc.RpcError as e:
+            self.logger.error(f"gRPC error while enabling sensor {sensor_id}: {e.details()}")
+            
+    def disable_sensor(self, sensor_id):
+        """Disable a sensor on the server."""
+        request = sensor_pb2.DisableSensorRequest(sensor_id=sensor_id)
+        try:
+            response = self.stub.DisableSensor(request)
+            if response.status == "Sensor disabled":
+                self.logger.info(f"Sensor {sensor_id} disabled successfully.")
+            else:
+                self.logger.error(f"Failed to disable sensor {sensor_id}: {response.status}")
+        except grpc.RpcError as e:
+            self.logger.error(f"gRPC error while disabling sensor {sensor_id}: {e.details()}")    
+                
     # HELPER METHODS ----------------------------------------------------------------
     def get_sensor_ids(self):
         """Fetch and return all available sensor IDs from the gRPC server."""

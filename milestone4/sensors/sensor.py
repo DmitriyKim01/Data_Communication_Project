@@ -116,7 +116,6 @@ class Sensor(grpc_sensor.SingleSensor):
       self.publish_all(humidity, temperature, wind)
       
   # MQTT METHODS -----------------------------
-  
   # Triggered when the sensor connects to the MQTT broker
   def on_connect(self, client, userdata, flags, return_code, properties):
     if return_code == 0:
@@ -263,6 +262,7 @@ class Sensor(grpc_sensor.SingleSensor):
       context.set_code(grpc.StatusCode.NOT_FOUND)
       return sensor_pb2.CaptureResponse() 
     try:
+      
         image_data = self.capture_event()  
         self.logger.info(f"{type(image_data)}")
         return sensor_pb2.CaptureResponse(image_data=image_data)
@@ -272,6 +272,17 @@ class Sensor(grpc_sensor.SingleSensor):
         context.set_code(grpc.StatusCode.INTERNAL)
         return sensor_pb2.CaptureResponse()
   
+  def EnableSensor(self,request,context):
+    self.start()
+    self.logger.info(f"Sensor {self.id} started")
+
+    return sensor_pb2.EnableSensorResponse(status="Sensor started successfully")
+  
+  def DisableSensor(self,request,context):
+    self.stop()
+    return sensor_pb2.EnableSensorRequest("started")
+    
+    
   # CAMERA METHODS -----------------------------
   
   # Return random byte array as an image
