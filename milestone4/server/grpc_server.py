@@ -24,6 +24,7 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
             current_sensor_ip = self.sensors[request.sensor_id]
             channel = grpc.insecure_channel(current_sensor_ip)  
             stub = grpc_sensor.SingleSensorStub(channel)
+            request = sensor_pb2.TriggerRequest(sensor_id=request.sensor_id)
             response = stub.TriggerCapture(request)
             print('Capture response:', response)
             return response

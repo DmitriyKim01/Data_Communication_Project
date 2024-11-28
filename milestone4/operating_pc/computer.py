@@ -77,6 +77,7 @@ class OperatingComputer:
             
     def on_message(self, client, userdata, message):
         payload = message.payload.decode('utf-8')
+        print(payload)
         data = json.loads(payload)
         print(f'Received Data: {payload}')
         with self.log_lock:
@@ -167,14 +168,13 @@ class OperatingComputer:
             self.logger.error(f'Error in send public key: {e.details()}')
         
     # Trigger the sensor to capture an image    
-    def trigger_capture(self):
-        sensor_id = self.sensor.lower()
+    def trigger_capture(self,sensor_id):
 
         '''Trigger the sensor to capture an image using gRPC.'''
-        self.logger.info(f'Triggering capture for sensor {sensor_id}...')
+       
 
         # Create a TriggerRequest object to send to the sensor
-        request = sensor_pb2.TriggerRequest(id=self.id, sensor_id=self.sensor.lower())
+        request = sensor_pb2.TriggerRequest(sensor_id=sensor_id)
 
         # Call the TriggerCapture method on the gRPC service
         try:
@@ -185,6 +185,7 @@ class OperatingComputer:
             self.logger.info(f'Capture response received from sensor {sensor_id}')
             self.logger.info(f'Image data: {response.image_data}')
             self.logger.info(f'Image for sensor {sensor_id} saved successfully.')
+            return response
         except grpc.RpcError as e:
             self.logger.error(f'Error triggering sensor {sensor_id}: {e}')
     

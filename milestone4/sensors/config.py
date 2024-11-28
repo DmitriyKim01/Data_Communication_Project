@@ -1,6 +1,6 @@
 
 class Config:
-  HOSTNAME = "35.183.124.89"
+  HOSTNAME = "192.168.0.145"
   PORT = 1883
   GRPC_SERVER_ADDRESS = "localhost:7070"
 
