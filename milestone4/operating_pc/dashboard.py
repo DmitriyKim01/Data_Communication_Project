@@ -130,11 +130,11 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, enable_cli
     #Handling enable/disable logic
     elif triggered_id == 'enable-btn':
         action_log.append(html.Li(f"Enable button clicked at {time.ctime()}", style={'color': 'green'}))
-        computer.enable_sensor(sensor_id=sensor_id)
+        computer.enable_sensor(sensor_id=selected_option)
 
     elif triggered_id == 'disable-btn':
         action_log.append(html.Li(f"Disable button clicked at {time.ctime()}", style={'color': 'red'}))
-        computer.disable_sensor(sensor_id=sensor_id)
+        computer.disable_sensor(sensor_id=selected_option)
 
     # Return the updated action log
     return action_log
