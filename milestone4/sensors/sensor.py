@@ -37,6 +37,7 @@ class Sensor(grpc_sensor.SingleSensor):
     self.name = f'Sensor {id}' 
     self.threads = []
     self.ip = "localhost"
+    self.is_publishing = True
     
     # Security
     self.computer_to_public_key = {}
@@ -90,30 +91,42 @@ class Sensor(grpc_sensor.SingleSensor):
     if self.channel:
       self.channel.close()
       self.logger.warning(f'Closed GRPC channel')
-      
+     
   # MOTION SIMULATION METHODS -----------------------------
-        
+  def enable_publishing(self):
+        """Enable MQTT publishing."""
+        self.is_publishing = True
+        self.logger.info(f"Publishing enabled for {self.id}")
+    
+  def disable_publishing(self):
+      """Disable MQTT publishing."""
+      self.is_publishing = False
+      self.logger.info(f"Publishing disabled for {self.id}")      
   # Simulate motion detection
   def simulate_motion(self):
+    """Simulate motion and publish data if enabled."""
     while self.is_active:
-      # Simulate motion detection
-      min_interval = Config.EVENT_MIN_INTERVAL
-      max_interval = Config.EVENT_MAX_INTERVAL
-      random_inteval = random.uniform(min_interval, max_interval)
-      time.sleep(random_inteval)
-      
-      temperature = self.get_temperature()
-      wind = self.get_wind()
-      humidity = self.get_humidity()
-      
-      # Publish event to MQTT broker
-      self.logger.info(f'MOTION EVENT HAPPENED')
-      image = self.capture_event()
-      self.publish_image(image)
-      self.publish_temperature(temperature)
-      self.publish_wind(wind)
-      self.publish_humidity(humidity)
-      self.publish_all(humidity, temperature, wind)
+        if self.is_publishing:
+          min_interval = Config.EVENT_MIN_INTERVAL
+          max_interval = Config.EVENT_MAX_INTERVAL
+          random_inteval = random.uniform(min_interval, max_interval)
+          time.sleep(random_inteval)
+          
+          # Fetch sensor data
+          temperature = self.get_temperature()
+          wind = self.get_wind()
+          humidity = self.get_humidity()
+          
+          # Publish event data if publishing is enabled
+          self.logger.info(f'MOTION EVENT HAPPENED')
+          image = self.capture_event()
+          self.publish_image(image)
+          self.publish_temperature(temperature)
+          self.publish_wind(wind)
+          self.publish_humidity(humidity)
+          self.publish_all(humidity, temperature, wind)
+        else:
+            time.sleep(1)  
       
   # MQTT METHODS -----------------------------
   # Triggered when the sensor connects to the MQTT broker
@@ -124,89 +137,91 @@ class Sensor(grpc_sensor.SingleSensor):
         self.logger.info(f'Failed to connect to MQTT broker', return_code)  
   
   def publish_image(self, image: bytes):
-     # Serialize the byte array using base64 encoding
-    encoded_image = base64.b64encode(image).decode('utf-8')
-    data = {
-      'id': self.id,
-      'name': self.name,
-      'type': 'image',
-      'image': encoded_image
-    }
-    data = json.dumps(data)
-    topic = f'/sensor/image/{self.id}'
-    result = self.client.publish(topic = topic, payload = data)
-    status = result[0]
-    if status == 0:
-      self.logger.info(f'Message sent to topic {topic}') 
-    else:
-      self.logger.error(f'Failed to send message to topic {topic}')
+      if self.is_publishing:    
+        encoded_image = base64.b64encode(image).decode('utf-8')
+        data = {
+            'id': self.id,
+            'name': self.name,
+            'type': 'image',
+            'image': encoded_image
+        }
+        data = json.dumps(data)
+        topic = f'/sensor/image/{self.id}'
+        result = self.client.publish(topic=topic, payload=data)
+        status = result[0]
+        if status == 0:
+            self.logger.info(f'Message sent to topic {topic}')
+        else:
+            self.logger.error(f'Failed to send message to topic {topic}')
 
   def publish_temperature(self, temperature: int):
-    data = {
-      'id': self.id,
-      'name': self.name,
-       'type': 'temperature',
-      'temperature': temperature
-    }
-    data = json.dumps(data)
-    topic = f'/sensor/temperature/{self.id}'
-    result = self.client.publish(topic = topic, payload = data)
-    status = result[0]
-    if status == 0:
-      self.logger.info(f'Message sent to topic {topic}') 
-    else:
-      self.logger.error(f'Failed to send message to topic {topic}')
+    if self.is_publishing:
+      data = {
+        'id': self.id,
+        'name': self.name,
+        'type': 'temperature',
+        'temperature': temperature
+      }
+      data = json.dumps(data)
+      topic = f'/sensor/temperature/{self.id}'
+      result = self.client.publish(topic=topic, payload=data)
+      status = result[0]
+      if status == 0:
+          self.logger.info(f'Message sent to topic {topic}')
+      else:
+          self.logger.error(f'Failed to send message to topic {topic}')
   
   def publish_wind(self, wind: int):
-    data = {
-      'id': self.id,
-      'name': self.name,
-      'type': 'wind',
-      'wind': wind
-    }
-    data = json.dumps(data)
-    topic = f'/sensor/wind/{self.id}'
-    result = self.client.publish(topic = topic, payload = data)
-    status = result[0]
-    if status == 0:
-      self.logger.info(f'Message sent to topic {topic}') 
-    else:
-      self.logger.error(f'Failed to send message to topic {topic}')
-      
+      if self.is_publishing:
+        data = {
+            'id': self.id,
+            'name': self.name,
+            'type': 'wind',
+            'wind': wind
+        }
+        data = json.dumps(data)
+        topic = f'/sensor/wind/{self.id}'
+        result = self.client.publish(topic=topic, payload=data)
+        status = result[0]
+        if status == 0:
+            self.logger.info(f'Message sent to topic {topic}')
+        else:
+            self.logger.error(f'Failed to send message to topic {topic}')
   def publish_humidity(self, humidity: int):
-    data = {
-      'id': self.id,
-      'name': self.name,
-      'type': 'humidity',
-      'humidity': humidity
-    }
-    data = json.dumps(data)
-    topic = f'/sensor/humidity/{self.id}'
-    result = self.client.publish(topic = topic, payload = data)
-    status = result[0]
-    if status == 0:
-      self.logger.info(f'Message sent to topic {topic}') 
-    else:
-      self.logger.error(f'Failed to send message to topic {topic}')
-  
+    if self.is_publishing:
+        data = {
+            'id': self.id,
+            'name': self.name,
+            'type': 'humidity',
+            'humidity': humidity
+        }
+        data = json.dumps(data)
+        topic = f'/sensor/humidity/{self.id}'
+        result = self.client.publish(topic=topic, payload=data)
+        status = result[0]
+        if status == 0:
+            self.logger.info(f'Message sent to topic {topic}')
+        else:
+            self.logger.error(f'Failed to send message to topic {topic}')
+
   def publish_all(self, humidity: int, temperature: int, wind: int):
-    data = {
-      'id': self.id,
-      'name': self.name,
-      'type': 'all',
-      'humidity': humidity,
-      'temperature': temperature,
-      'wind': wind
-    }
-    data = json.dumps(data)
-    topic = f'/sensor/all/{self.id}'
-    result = self.client.publish(topic = topic, payload = data)
-    status = result[0]
-    if status == 0:
-      self.logger.info(f'Message sent to topic {topic}') 
-    else:
-      self.logger.error(f'Failed to send message to topic {topic}')
-  
+    if self.is_publishing:
+        data = {
+            'id': self.id,
+            'name': self.name,
+            'type': 'all',
+            'humidity': humidity,
+            'temperature': temperature,
+            'wind': wind
+        }
+        data = json.dumps(data)
+        topic = f'/sensor/all/{self.id}'
+        result = self.client.publish(topic=topic, payload=data)
+        status = result[0]
+        if status == 0:
+            self.logger.info(f'Message sent to topic {topic}')
+        else:
+            self.logger.error(f'Failed to send message to topic {topic}')
   # VALUE METHODS -----------------------------
   
   def get_humidity(self):
@@ -273,14 +288,15 @@ class Sensor(grpc_sensor.SingleSensor):
         return sensor_pb2.CaptureResponse()
   
   def EnableSensor(self,request,context):
-    self.start()
+    self.enable_publishing()
     self.logger.info(f"Sensor {self.id} started")
-
+    print("Enable Sensor inside the Sensor.py")
     return sensor_pb2.EnableSensorResponse(status="Sensor started successfully")
   
   def DisableSensor(self,request,context):
-    self.stop()
-    return sensor_pb2.EnableSensorRequest("started")
+    self.disable_publishing()
+    self.logger.info(f"Sensor {self.id} stopped")
+    return sensor_pb2.EnableSensorResponse(status="Sensor stopped successfully")
     
     
   # CAMERA METHODS -----------------------------

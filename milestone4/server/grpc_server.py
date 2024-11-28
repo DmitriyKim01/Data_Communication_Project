@@ -76,12 +76,20 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
             context.set_details(f"Error during gRPC call: {e}")
             return sensor_pb2.PublicKeyResponse
         
+        
+        
+        
     def EnableSensor(self, request, context):
         sensor_id = request.sensor_id
         if sensor_id in self.sensors:
             self.sensor_states[sensor_id] = "enabled"
-            return sensor_pb2.EnableSensorResponse(status="Sensor enabled")
-        
+            current_sensor_ip = self.sensors[request.sensor_id]
+            channel = grpc.insecure_channel(current_sensor_ip)
+            stub = grpc_sensor.SingleSensorStub(channel)
+            response = stub.EnableSensor(request)
+            print('Capture Enable Sensor response:', response)
+
+            return response
         else:
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details(f"Sensor {sensor_id} not found.")
@@ -91,11 +99,20 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
         sensor_id = request.sensor_id
         if sensor_id in self.sensors:
             self.sensor_states[sensor_id] = "disabled"
-            return sensor_pb2.DisableSensorResponse(status="Sensor disabled")
+            current_sensor_ip = self.sensors[request.sensor_id]
+            channel = grpc.insecure_channel(current_sensor_ip)
+            stub = grpc_sensor.SingleSensorStub(channel)
+            response = stub.DisableSensor(request)
+            print('Capture Disable Sensor response:', response)
+            return response
         else:
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details(f"Sensor {sensor_id} not found.")
             return sensor_pb2.DisableSensorResponse(status="Sensor not found")
+        
+        
+        
+        
         
 def serve():
     # Create the server and add the servicer
