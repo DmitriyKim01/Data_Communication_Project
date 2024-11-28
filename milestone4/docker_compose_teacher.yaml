@@ -1,0 +1,52 @@
+services:
+  sensors-1:
+    build: sensors/.
+    networks:
+      sensor:
+        ipv4_address: 172.16.238.13
+  sensors-2:
+    build: sensors/.
+    networks:
+      sensor:
+        ipv4_address: 172.16.238.12
+  broker:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto_broker
+    ports:
+        - 1883:1883
+        - 9001:9001
+    volumes:
+        - ./server/config:/mosquitto/config
+        - ./server/data:/mosquitto/data
+        - ./server/log:/mosquitto/log
+    networks:
+      sensor:
+        ipv4_address: 172.16.238.2
+      public:
+        ipv4_address: 172.19.138.2
+
+  middleware:
+    build : server/.
+    networks:
+      sensor:
+        ipv4_address: 172.16.238.3
+      public:
+        ipv4_address: 172.19.138.3
+
+  opc-1:
+    build: opc/.
+    networks:
+      public:
+        ipv4_address: 172.19.138.23
+
+networks:
+  sensor:
+    name: sensor_net
+    ipam:
+      config:
+        - subnet: "172.16.238.0/24"
+  public:
+    name: pub_net
+    ipam:
+      config:
+        - subnet: "172.19.138.0/24"

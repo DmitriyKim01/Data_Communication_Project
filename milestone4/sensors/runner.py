@@ -20,8 +20,11 @@ if __name__ == "__main__":
   logger.addFilter(SensorNameFilter())
       
   sensor = Sensor('0001', 60123)
+  sensor2 = Sensor('0002', 60124)
+  sensor3 = Sensor('0003', 60125)
+
   
-  sensors = [sensor]
+  sensors = [sensor,sensor2,sensor3]
   
   try:
     for sensor in sensors:

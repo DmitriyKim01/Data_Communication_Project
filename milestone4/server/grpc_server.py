@@ -16,7 +16,7 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
     def __init__(self):
         self.sensors = {}
         self.computers = {}
-    
+        self.sensor_states = {}
     # Capture an image from a sensor
     def TriggerCapturePc(self, request, context):
         try:
@@ -24,8 +24,8 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
             current_sensor_ip = self.sensors[request.sensor_id]
             channel = grpc.insecure_channel(current_sensor_ip)  
             stub = grpc_sensor.SingleSensorStub(channel)
+            request = sensor_pb2.TriggerRequest(sensor_id=request.sensor_id)
             response = stub.TriggerCapture(request)
-            print('Capture response:', response)
             return response
         except grpc.RpcError as e:
             context.set_code(grpc.StatusCode.INTERNAL)
@@ -36,14 +36,13 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
     def AddSensor(self, request, context):
         print(f"Adding sensor {request.id} with address {request.ip}:{request.port}")
         self.sensors[request.id] = f"{request.ip}:{request.port}"
-        return sensor_pb2.EmptyResponse()
+        return sensor_pb2.EmptyResponse()        
     
     # Return the available sensor ids
     def GetSensorIds(self, request, context):
         if self.computers.get(request.id) is None:
             context.set_code(grpc.StatusCode.UNAUTHENTICATED)
             return sensor_pb2.AvailableSensors(ids=[])
-        
         public_key = self.computers[request.id]
         sensor_ids = list(self.sensors.keys())  
         sensor_ids_json = json.dumps(sensor_ids).encode('utf-8')
@@ -76,7 +75,45 @@ class SensorServiceServicer(grpc_sensor.SensorServerServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Error during gRPC call: {e}")
             return sensor_pb2.PublicKeyResponse
-    
+        
+        
+        
+        
+    def EnableSensor(self, request, context):
+        sensor_id = request.sensor_id
+        if sensor_id in self.sensors:
+            self.sensor_states[sensor_id] = "enabled"
+            current_sensor_ip = self.sensors[request.sensor_id]
+            channel = grpc.insecure_channel(current_sensor_ip)
+            stub = grpc_sensor.SingleSensorStub(channel)
+            response = stub.EnableSensor(request)
+            print('Capture Enable Sensor response:', response)
+
+            return response
+        else:
+            context.set_code(grpc.StatusCode.NOT_FOUND)
+            context.set_details(f"Sensor {sensor_id} not found.")
+            return sensor_pb2.EnableSensorResponse(status="Sensor not found")
+        
+    def DisableSensor(self, request, context):
+        sensor_id = request.sensor_id
+        if sensor_id in self.sensors:
+            self.sensor_states[sensor_id] = "disabled"
+            current_sensor_ip = self.sensors[request.sensor_id]
+            channel = grpc.insecure_channel(current_sensor_ip)
+            stub = grpc_sensor.SingleSensorStub(channel)
+            response = stub.DisableSensor(request)
+            print('Capture Disable Sensor response:', response)
+            return response
+        else:
+            context.set_code(grpc.StatusCode.NOT_FOUND)
+            context.set_details(f"Sensor {sensor_id} not found.")
+            return sensor_pb2.DisableSensorResponse(status="Sensor not found")
+        
+        
+        
+        
+        
 def serve():
     # Create the server and add the servicer
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))

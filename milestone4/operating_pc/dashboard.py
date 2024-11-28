@@ -8,15 +8,16 @@ import dash
 from dash import dcc, html, Input, Output, callback, State, ctx
 import logging
 import paho.mqtt.client as mqtt
-import argparse
-import grpc
-import proto.sensor_pb2 as sensor_pb2 
-import proto.sensor_pb2_grpc as sensor_pb2_grpc
 from config import Config
 import time
-import json
 import base64
 from computer import OperatingComputer
+image_path = 'assets/f1.jpg'
+image_data = ''
+def b64_image(image_filename):
+    with open(image_filename, 'rb') as f:
+        image = f.read()
+    return 'data:image/png;base64,' + base64.b64encode(image).decode('utf-8')
 
 # -------------------------- Logging Setup --------------------------
 # Set up logging configuration
@@ -72,16 +73,20 @@ def get_sensor_ids_and_options(n_clicks):
     Output('action-log', 'children'),  
     [Input('trigger-btn', 'n_clicks'),  
      Input('clear-action-log-btn', 'n_clicks'),
-     Input('subscribe-btn', 'n_clicks')],  
+     Input('subscribe-btn', 'n_clicks'),
+     Input('enable-btn', 'n_clicks'),
+     Input('disable-btn', 'n_clicks')],  
     [State('select-dropdown', 'value'),  
      State('type-dropdown', 'value'),  
      State('sensor-id-dropdown', 'value')]  
 )
-def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, selected_option, sensor_type, sensor_id):
+def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, enable_clicks, disable_clicks, selected_option, sensor_type, sensor_id):
     global action_log  # Ensure we use the global action log list
     trigger_clicks = trigger_clicks or 0
     clear_clicks = clear_clicks or 0
     subscribe_clicks = subscribe_clicks or 0
+    enable_clicks = enable_clicks or 0
+    disable_clicks = disable_clicks or 0
 
     # Determine the triggering input
     triggered_id = ctx.triggered_id
@@ -94,10 +99,28 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, selected_o
     elif triggered_id == 'trigger-btn':
         # Handle trigger button logic
         if selected_option:
+            response = computer.trigger_capture(selected_option)
+            
+            # Ensure the 'assets' folder exists, create it if necessary
+            assets_folder = os.path.join(os.path.dirname(__file__), "assets")
+            if not os.path.exists(assets_folder):
+                os.makedirs(assets_folder)
+            
+            # Save the image to the assets folder
+            image_path = os.path.join(assets_folder, "image.jpg")
+            with open(image_path, "wb") as f:
+                f.write(response.image_data)
+            
+            # Create the image element with the correct relative path to the assets folder
+            image_element = html.Img(src=f"/assets/image.jpg", style={"width": "50px", "height": "auto"})
+            
+            # Create the log entry with the image and text
             new_log = html.Li(
-                f"Trigger button clicked at {time.ctime()}, selected option: {selected_option}",
+                [
+                    image_element  
+                ],
                 style={"color": "orange"}
-            )
+            )         
         else:
             new_log = html.Li(
                 "no option selected",
@@ -121,9 +144,19 @@ def manage_action_log(trigger_clicks, clear_clicks, subscribe_clicks, selected_o
             except Exception as e:
                 logging.error(f"Subscription failed: {str(e)}")
                 action_log.append(html.Li(f"Error during subscription: {str(e)}", style={'color': 'red'}))
+                
+    #Handling enable/disable logic
+    elif triggered_id == 'enable-btn':
+        action_log.append(html.Li(f"Enable button clicked at {time.ctime()}", style={'color': 'green'}))
+        computer.enable_sensor(sensor_id=selected_option)
+
+    elif triggered_id == 'disable-btn':
+        action_log.append(html.Li(f"Disable button clicked at {time.ctime()}", style={'color': 'red'}))
+        computer.disable_sensor(sensor_id=selected_option)
 
     # Return the updated action log
     return action_log
+
 
 
 @app.callback(
@@ -259,8 +292,10 @@ html.Div([
 if __name__ == '__main__':
     # Create a new computer instance
     computer = OperatingComputer("0001", True, False, "all", "0001")
-    computer.send_public_key_to_server()
+    computer.send_public_key_to_server("0001")
+    computer.send_public_key_to_server("0002")
+    computer.send_public_key_to_server("0003")
     try:
-        app.run_server(debug=False, port=50129)
+        app.run_server(debug=False, port=60234)
     except KeyboardInterrupt:
         computer.disconnect()

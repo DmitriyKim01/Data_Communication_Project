@@ -77,11 +77,11 @@ class OperatingComputer:
             
     def on_message(self, client, userdata, message):
         payload = message.payload.decode('utf-8')
+        print(payload)
         data = json.loads(payload)
-        encoded_image = data.get('image')
-        if encoded_image:
-            with self.log_lock:
-                self.log.append(f"Received data from sensor : {self.sensor} at {time.ctime()}")
+        print(f'Received Data: {payload}')
+        with self.log_lock:
+            self.log.append(f"Received data:{payload} from sensor : {self.sensor} at {time.ctime()}")
 
     def get_log(self):
         with self.log_lock:
@@ -93,7 +93,7 @@ class OperatingComputer:
         with self.log_lock:
             if len(self.log) >0:
                 self.log.clear()
-
+        
         
     def listen_to_sensors(self, sensor_type, sensor_id):
         try:
@@ -154,12 +154,12 @@ class OperatingComputer:
         return private_key, public_key
     # GRPC ----------------------------------------------------------------
     
-    def send_public_key_to_server(self):
+    def send_public_key_to_server(self,sensor_id):
         public_key_pem = self.public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
-        request = sensor_pb2.PublicKeyRequest(id=self.id, public_key=public_key_pem, sensor_id=self.sensor.lower())
+        request = sensor_pb2.PublicKeyRequest(id=self.id, public_key=public_key_pem, sensor_id=sensor_id)
         try:
             response = self.stub.SendPublicKeyToServer(request)
             self.logger.info(f"Public key sent to server: {response.message}")
@@ -168,26 +168,55 @@ class OperatingComputer:
             self.logger.error(f'Error in send public key: {e.details()}')
         
     # Trigger the sensor to capture an image    
-    def trigger_capture(self):
-        sensor_id = self.sensor.lower()
+    def trigger_capture(self,sensor_id):
 
         '''Trigger the sensor to capture an image using gRPC.'''
-        self.logger.info(f'Triggering capture for sensor {sensor_id}...')
+       
 
         # Create a TriggerRequest object to send to the sensor
-        request = sensor_pb2.TriggerRequest(id=self.id, sensor_id=self.sensor.lower())
+        request = sensor_pb2.TriggerRequest(sensor_id=sensor_id)
 
         # Call the TriggerCapture method on the gRPC service
         try:
             response = self.stub.TriggerCapturePc(request)
+            print(response)
             # Handle the image data response
             
             self.logger.info(f'Capture response received from sensor {sensor_id}')
             self.logger.info(f'Image data: {response.image_data}')
             self.logger.info(f'Image for sensor {sensor_id} saved successfully.')
+            return response
         except grpc.RpcError as e:
             self.logger.error(f'Error triggering sensor {sensor_id}: {e}')
-
+    
+    
+    
+    def enable_sensor(self, sensor_id):
+        """Enable a sensor on the server."""
+        request = sensor_pb2.EnableSensorRequest(sensor_id=sensor_id)
+        try:
+            response = self.stub.EnableSensor(request)
+            if response.status == "Sensor started successfully":
+                self.logger.info(f"Sensor {sensor_id} enabled successfully.")
+            else:
+                self.logger.error(f"Failed to enable sensor {sensor_id}: {response.status}")
+        except grpc.RpcError as e:
+            self.logger.error(f"gRPC error while enabling sensor {sensor_id}: {e.details()}")
+            
+    def disable_sensor(self, sensor_id):
+        """Disable a sensor on the server."""
+        request = sensor_pb2.DisableSensorRequest(sensor_id=sensor_id)
+        try:
+            response = self.stub.DisableSensor(request)
+            if response.status == "Sensor stopped successfully":
+                self.logger.info(f"Sensor {sensor_id} disabled successfully.")
+            else:
+                self.logger.error(f"Failed to disable sensor {sensor_id}: {response.status}")
+        except grpc.RpcError as e:
+            self.logger.error(f"gRPC error while disabling sensor {sensor_id}: {e.details()}")    
+                
+                
+                
     # HELPER METHODS ----------------------------------------------------------------
     def get_sensor_ids(self):
         """Fetch and return all available sensor IDs from the gRPC server."""
