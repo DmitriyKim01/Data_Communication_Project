@@ -71,7 +71,7 @@ LED and Motion Sensor setup (see `screenshots/`):
 - Automates motion-triggered image capture with timestamped filenames and voltage metadata for traceability.
 - Thread-safe event processing with locks and semaphores ensures reliable multi-threaded sensor operations under load.
 - Provides mock sensor implementations enabling hardware-free testing of detection pipelines across iterative milestones.
-- Milestone structure ends with Dockerized nodes communicating through gRPC endpoints and MQTT topics.
+- Milestone structure culminates in Dockerized nodes communicating through gRPC endpoints and MQTT topics.
 
 ## License
 
