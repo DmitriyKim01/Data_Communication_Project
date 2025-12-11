@@ -67,11 +67,11 @@ LED and Motion Sensor setup (see `screenshots/`):
 
 ## Project Highlights
 
-- Implements distributed wildlife monitoring using sensors, event queues, gRPC services, and MQTT nodes.
-- Automates motion-triggered image capture with timestamped filenames and voltage metadata.
-- Locks and semaphores keep event processing thread-safe and reliable for multi-threaded sensors.
-- Provides mock sensor implementations for hardware-free testing of detection pipelines.
-- Features Dockerized nodes communicating through gRPC endpoints and MQTT topics.
+- Implements distributed wildlife monitoring using sensors, event queues, and gRPC/MQTT middleware-based node architecture.
+- Automates motion-triggered image capture with timestamped filenames and voltage metadata for rich traceability.
+- Locks and semaphores keep event processing thread-safe and reliable for multi-threaded sensors consistently.
+- Provides mock sensor implementations for hardware-free testing of detection pipelines across milestones safely.
+- Features fully Dockerized sensor nodes communicating through standardized gRPC endpoints and MQTT topics.
 
 ## License
 
