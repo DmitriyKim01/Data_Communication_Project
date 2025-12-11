@@ -67,9 +67,11 @@ LED and Motion Sensor setup (see `screenshots/`):
 
 ## Project Highlights
 
-- **Milestone-driven implementation**: See the `milestone4/README.md` for component details and system diagrams.
-- **Mocking and real hardware**: Easy toggling between simulated data and real sensor readings.
-- **Customizable events**: Extendable event types for new wildlife scenarios or non-wildlife sensor monitoring.
+- Implements distributed wildlife monitoring using sensors, event queues, and node architecture with gRPC/MQTT middleware.
+- Automates motion-triggered image capture with timestamped filenames and voltage metadata for rich traceability.
+- Locks and semaphores keep event processing thread-safe and reliable for multi-threaded sensor operations.
+- Provides reliable mock sensor implementations for hardware-free testing of detection pipelines across milestones.
+- Features fully Dockerized sensor nodes communicating through standardized gRPC endpoints and MQTT topics.
 
 ## License
 
